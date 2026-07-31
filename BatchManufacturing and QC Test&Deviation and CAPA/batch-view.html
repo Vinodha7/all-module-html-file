@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PharmaTrack — Batch Detail</title>
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+<div class="app">
+
+  <!-- ===== Sidebar (same as dashboard) ===== -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="logo"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+      <div><h1>PharmaTrack</h1><span>Drug Trial &amp; Supply Chain</span></div>
+    </div>
+    <div class="nav-item" onclick="location.href='dashboard.html'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg> Dashboard</div>
+    <div class="nav-section">Operations</div>
+    <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12h6M9 16h6M9 8h6"/><rect x="4" y="3" width="16" height="18" rx="2"/></svg> Clinical Trials</div>
+    <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3 3-5 6-5s6 2 6 5"/><path d="M17 11l2 2 4-4"/></svg> Subjects &amp; Visits</div>
+    <div class="nav-item active" onclick="location.href='dashboard.html'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8l-9-5-9 5v8l9 5 9-5z"/><path d="M3.3 7L12 12l8.7-5M12 22V12"/></svg> Batch Manufacturing</div>
+    <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="7" width="14" height="10" rx="1"/><path d="M15 10h4l3 3v4h-7z"/><circle cx="5.5" cy="18.5" r="1.5"/><circle cx="17.5" cy="18.5" r="1.5"/></svg> Supply Chain</div>
+    <div class="nav-section">Quality &amp; Compliance</div>
+    <div class="nav-item" onclick="location.href='deviation.html'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.3 3.3l-8 14A2 2 0 0 0 4 20h16a2 2 0 0 0 1.7-2.7l-8-14a2 2 0 0 0-3.4 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12" y2="17"/></svg> Deviations &amp; CAPA</div>
+    <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> Regulatory Affairs</div>
+    <div class="nav-section">Monitoring</div>
+    <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg> Notifications &amp; Alerts</div>
+    <div class="nav-section">Administration</div>
+    <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3 3-5 6-5s6 2 6 5"/><circle cx="18" cy="9" r="2"/></svg> Users</div>
+    <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17l4-4 3 3 7-7"/><path d="M14 6h6v6"/></svg> E-Signatures</div>
+    <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg> Audit Trail</div>
+  </aside>
+
+  <!-- ===== Main ===== -->
+  <div class="main">
+    <header class="topbar">
+      <span class="role-pill">Manufacturing Supervisor</span>
+      <div class="spacer"></div>
+      <div class="bell"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg><span class="dot">5</span></div>
+      <div class="user-wrap">
+        <div class="user" onclick="toggleMenu(this)">
+          <div class="avatar">MN</div>
+          <div class="who" style="text-align:left"><b>Meera Nair</b><br><small>Manufacturing Supervisor</small></div>
+          <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="menu user-menu">
+          <button onclick="closeAllMenus()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg> Profile</button>
+          <button onclick="openModal('modal-signout')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg> Sign out</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="content">
+      <div class="crumb"><a href="dashboard.html">Batches</a> &nbsp;/&nbsp; BATCH-2026-231</div>
+
+      <div class="detail-head">
+        <div>
+          <h2>Oncozin 50mg – Lot 2231</h2>
+        </div>
+      </div>
+
+      <!-- Summary -->
+      <div class="summary">
+        <div class="item"><div class="k">Status</div><div class="v"><span class="badge b-amber" id="batch-status">InProcess</span></div></div>
+        <div class="item"><div class="k">Quantity</div><div class="v">30,000 Tablets</div></div>
+        <div class="item"><div class="k">Mfg Date</div><div class="v">Sep 8, 2025</div></div>
+        <div class="item"><div class="k">Expiry</div><div class="v">Oct 6, 2026</div></div>
+        <div class="spacer"></div>
+        <button class="btn btn-primary" id="send-btn" onclick="sendBatch()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          Send
+        </button>
+      </div>
+
+      <!-- ===== QC Tests ===== -->
+      <section class="section">
+        <div class="bar">
+          <h3>QC Tests</h3>
+          <div class="spacer"></div>
+          <span class="tip" data-tip="Add QC Test">
+            <button class="btn btn-primary" onclick="openModal('modal-create-test')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Test
+            </button>
+          </span>
+        </div>
+        <div class="card-block">
+          <table>
+            <thead><tr><th>Test</th><th>Type</th><th>Tested By</th><th>Result</th><th>Specification</th><th>Status</th><th style="text-align:right">Actions</th></tr></thead>
+            <tbody>
+              <tr>
+                <td class="cell-title"><b>QC-2026-001</b><small>Sep 10, 2025</small></td>
+                <td>Assay</td><td>Arjun Rao</td><td>99.2%</td><td>95 – 105%</td>
+                <td><span class="badge b-green">Pass</span></td>
+                <td style="text-align:right">
+                  <div class="actions-wrap">
+                    <button class="icon-btn" onclick="toggleMenu(this)"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg></button>
+                    <div class="menu">
+                      <button onclick="openModal('modal-view-test')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg> View</button>
+                      <button onclick="openModal('modal-edit-test')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.1 2.1 0 0 1 3 3L12 15l-4 1 1-4z"/></svg> Edit</button>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td class="cell-title"><b>QC-2026-002</b><small>Sep 11, 2025</small></td>
+                <td>Dissolution</td><td>Nita Shah</td><td>82%</td><td>&gt; 80%</td>
+                <td><span class="badge b-amber">Retest</span></td>
+                <td style="text-align:right">
+                  <div class="actions-wrap">
+                    <button class="icon-btn" onclick="toggleMenu(this)"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg></button>
+                    <div class="menu">
+                      <button onclick="openModal('modal-view-test')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg> View</button>
+                      <button onclick="openModal('modal-edit-test')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.1 2.1 0 0 1 3 3L12 15l-4 1 1-4z"/></svg> Edit</button>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ===== Raw Materials ===== -->
+      <section class="section">
+        <div class="bar">
+          <h3>Raw Materials</h3>
+          <div class="spacer"></div>
+          <span class="tip" data-tip="Add Raw Material">
+            <button class="btn btn-primary" onclick="openModal('modal-create-material')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Material
+            </button>
+          </span>
+        </div>
+        <div class="card-block">
+          <table>
+            <thead><tr><th>Usage</th><th>Material</th><th>Lot Number</th><th>Quantity Used</th><th>Status</th><th style="text-align:right">Actions</th></tr></thead>
+            <tbody>
+              <tr>
+                <td class="cell-title"><b>RM-2026-001</b></td>
+                <td>Microcrystalline Cellulose</td><td>MCC-8841</td><td>12 Kg</td>
+                <td><span class="badge b-green">Consumed</span></td>
+                <td style="text-align:right">
+                  <div class="actions-wrap">
+                    <button class="icon-btn" onclick="toggleMenu(this)"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg></button>
+                    <div class="menu">
+                      <button onclick="openModal('modal-view-material')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg> View</button>
+                      <button onclick="openModal('modal-edit-material')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.1 2.1 0 0 1 3 3L12 15l-4 1 1-4z"/></svg> Edit</button>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td class="cell-title"><b>RM-2026-002</b></td>
+                <td>Magnesium Stearate</td><td>MGS-2290</td><td>0.5 Kg</td>
+                <td><span class="badge b-purple">Quarantined</span></td>
+                <td style="text-align:right">
+                  <div class="actions-wrap">
+                    <button class="icon-btn" onclick="toggleMenu(this)"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg></button>
+                    <div class="menu">
+                      <button onclick="openModal('modal-view-material')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg> View</button>
+                      <button onclick="openModal('modal-edit-material')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.1 2.1 0 0 1 3 3L12 15l-4 1 1-4z"/></svg> Edit</button>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<!-- ============ QC TEST — CREATE ============ -->
+<div class="overlay" id="modal-create-test">
+  <div class="modal">
+    <button class="close" onclick="closeModal('modal-create-test')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    <h3>Create QC Test</h3>
+    <p class="sub">Record an in-process or finished-product test</p>
+    <form onsubmit="return save(event,'modal-create-test')">
+      <div class="form-grid">
+        <div class="field"><label>Test ID</label><input value="QC-AUTO" disabled><span class="hint">✓ Auto-generated</span></div>
+        <div class="field"><label>Batch</label><input value="BATCH-2026-231" disabled></div>
+        <div class="field"><label>Test Type <span class="req">*</span></label><select required><option>Assay</option><option>Dissolution</option><option>Sterility</option><option>Microbial</option><option>Stability</option></select></div>
+        <div class="field"><label>Tested By <span class="req">*</span></label><select required><option>Arjun Rao</option><option>Nita Shah</option><option>Meera Nair</option></select></div>
+        <div class="field"><label>Test Date <span class="req">*</span></label><input type="date" required></div>
+        <div class="field"><label>Status <span class="req">*</span></label><select required><option>Pass</option><option>Fail</option><option>Retest</option></select></div>
+        <div class="field"><label>Result <span class="req">*</span></label><input placeholder="e.g. 99.2%" required></div>
+        <div class="field"><label>Specification <span class="req">*</span></label><input placeholder="e.g. 95 – 105%" required></div>
+      </div>
+      <div class="modal-foot"><button class="btn btn-primary" type="submit">Save</button></div>
+    </form>
+  </div>
+</div>
+
+<!-- ============ QC TEST — EDIT ============ -->
+<div class="overlay" id="modal-edit-test">
+  <div class="modal">
+    <button class="close" onclick="closeModal('modal-edit-test')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    <h3>Edit QC Test</h3>
+    <p class="sub">Update the QC test record</p>
+    <form onsubmit="return save(event,'modal-edit-test')">
+      <div class="form-grid">
+        <div class="field"><label>Test ID</label><input value="QC-2026-001" disabled></div>
+        <div class="field"><label>Batch</label><input value="BATCH-2026-231" disabled></div>
+        <div class="field"><label>Test Type <span class="req">*</span></label><select required><option selected>Assay</option><option>Dissolution</option><option>Sterility</option><option>Microbial</option><option>Stability</option></select></div>
+        <div class="field"><label>Tested By <span class="req">*</span></label><select required><option selected>Arjun Rao</option><option>Nita Shah</option><option>Meera Nair</option></select></div>
+        <div class="field"><label>Test Date <span class="req">*</span></label><input type="date" value="2025-09-10" required></div>
+        <div class="field"><label>Status <span class="req">*</span></label><select required><option selected>Pass</option><option>Fail</option><option>Retest</option></select></div>
+        <div class="field"><label>Result <span class="req">*</span></label><input value="99.2%" required></div>
+        <div class="field"><label>Specification <span class="req">*</span></label><input value="95 – 105%" required></div>
+      </div>
+      <div class="modal-foot"><button class="btn btn-primary" type="submit">Save</button></div>
+    </form>
+  </div>
+</div>
+
+<!-- ============ QC TEST — VIEW (read-only) ============ -->
+<div class="overlay" id="modal-view-test">
+  <div class="modal">
+    <button class="close" onclick="closeModal('modal-view-test')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    <h3>QC Test Details</h3>
+    <p class="sub">QC-2026-001</p>
+    <div class="form-grid">
+      <div class="field readonly"><label>Test ID</label><div class="val">QC-2026-001</div></div>
+      <div class="field readonly"><label>Batch</label><div class="val">BATCH-2026-231</div></div>
+      <div class="field readonly"><label>Test Type</label><div class="val">Assay</div></div>
+      <div class="field readonly"><label>Tested By</label><div class="val">Arjun Rao</div></div>
+      <div class="field readonly"><label>Test Date</label><div class="val">Sep 10, 2025</div></div>
+      <div class="field readonly"><label>Status</label><div class="val"><span class="badge b-green">Pass</span></div></div>
+      <div class="field readonly"><label>Result</label><div class="val">99.2%</div></div>
+      <div class="field readonly"><label>Specification</label><div class="val">95 – 105%</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ RAW MATERIAL — CREATE ============ -->
+<div class="overlay" id="modal-create-material">
+  <div class="modal">
+    <button class="close" onclick="closeModal('modal-create-material')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    <h3>Create Raw Material</h3>
+    <p class="sub">Record raw-material consumption for this batch</p>
+    <form onsubmit="return save(event,'modal-create-material')">
+      <div class="form-grid">
+        <div class="field"><label>Usage ID</label><input value="RM-AUTO" disabled><span class="hint">✓ Auto-generated</span></div>
+        <div class="field"><label>Batch</label><input value="BATCH-2026-231" disabled></div>
+        <div class="field full"><label>Material Name <span class="req">*</span></label><input placeholder="e.g. Microcrystalline Cellulose" required></div>
+        <div class="field"><label>Material Lot Number <span class="req">*</span></label><input placeholder="e.g. MCC-8841" required></div>
+        <div class="field"><label>Status <span class="req">*</span></label><select required><option>Consumed</option><option>Quarantined</option></select></div>
+        <div class="field"><label>Quantity Used <span class="req">*</span></label><input type="number" placeholder="e.g. 12" required></div>
+        <div class="field"><label>Unit <span class="req">*</span></label><select required><option>Kg</option><option>g</option><option>Litres</option><option>mL</option><option>Units</option></select></div>
+      </div>
+      <div class="modal-foot"><button class="btn btn-primary" type="submit">Save</button></div>
+    </form>
+  </div>
+</div>
+
+<!-- ============ RAW MATERIAL — EDIT ============ -->
+<div class="overlay" id="modal-edit-material">
+  <div class="modal">
+    <button class="close" onclick="closeModal('modal-edit-material')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    <h3>Edit Raw Material</h3>
+    <p class="sub">Update the raw-material usage record</p>
+    <form onsubmit="return save(event,'modal-edit-material')">
+      <div class="form-grid">
+        <div class="field"><label>Usage ID</label><input value="RM-2026-001" disabled></div>
+        <div class="field"><label>Batch</label><input value="BATCH-2026-231" disabled></div>
+        <div class="field full"><label>Material Name <span class="req">*</span></label><input value="Microcrystalline Cellulose" required></div>
+        <div class="field"><label>Material Lot Number <span class="req">*</span></label><input value="MCC-8841" required></div>
+        <div class="field"><label>Status <span class="req">*</span></label><select required><option selected>Consumed</option><option>Quarantined</option></select></div>
+        <div class="field"><label>Quantity Used <span class="req">*</span></label><input type="number" value="12" required></div>
+        <div class="field"><label>Unit <span class="req">*</span></label><select required><option selected>Kg</option><option>g</option><option>Litres</option><option>mL</option><option>Units</option></select></div>
+      </div>
+      <div class="modal-foot"><button class="btn btn-primary" type="submit">Save</button></div>
+    </form>
+  </div>
+</div>
+
+<!-- ============ RAW MATERIAL — VIEW (read-only) ============ -->
+<div class="overlay" id="modal-view-material">
+  <div class="modal">
+    <button class="close" onclick="closeModal('modal-view-material')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    <h3>Raw Material Details</h3>
+    <p class="sub">RM-2026-001</p>
+    <div class="form-grid">
+      <div class="field readonly"><label>Usage ID</label><div class="val">RM-2026-001</div></div>
+      <div class="field readonly"><label>Batch</label><div class="val">BATCH-2026-231</div></div>
+      <div class="field readonly full"><label>Material Name</label><div class="val">Microcrystalline Cellulose</div></div>
+      <div class="field readonly"><label>Material Lot Number</label><div class="val">MCC-8841</div></div>
+      <div class="field readonly"><label>Status</label><div class="val"><span class="badge b-green">Consumed</span></div></div>
+      <div class="field readonly"><label>Quantity Used</label><div class="val">12</div></div>
+      <div class="field readonly"><label>Unit</label><div class="val">Kg</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ SIGN OUT CONFIRM ============ -->
+<div class="overlay" id="modal-signout">
+  <div class="modal" style="max-width:460px">
+    <button class="close" onclick="closeModal('modal-signout')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    <h3>Sign out?</h3>
+    <p class="sub" style="margin-bottom:0">Are you sure you want to sign out of <b style="color:var(--text)">PharmaTrack</b>?</p>
+    <div class="modal-foot"><button class="btn btn-primary" onclick="location.href='login.html'">Yes</button></div>
+  </div>
+</div>
+
+<script>
+  function openModal(id){ closeAllMenus(); document.getElementById(id).classList.add('open'); }
+
+  function sendBatch(){
+    var badge = document.getElementById('batch-status');
+    badge.textContent = 'QCHold';
+    badge.classList.remove('b-amber');
+    badge.classList.add('b-blue');
+  }
+  function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+  function save(e,id){ e.preventDefault(); closeModal(id); return false; }
+
+  function toggleMenu(btn){
+    var menu = btn.nextElementSibling;
+    var isOpen = menu.classList.contains('open');
+    closeAllMenus();
+    if(!isOpen) menu.classList.add('open');
+    event.stopPropagation();
+  }
+  function closeAllMenus(){ document.querySelectorAll('.menu.open').forEach(m=>m.classList.remove('open')); }
+  document.addEventListener('click', closeAllMenus);
+  document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',e=>{ if(e.target===o) o.classList.remove('open'); }));
+</script>
+</body>
+</html>
