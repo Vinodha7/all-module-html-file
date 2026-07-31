@@ -1,0 +1,979 @@
+# PharmaTrack Frontend Implementation & Backend Integration Prompt
+
+## Project Context
+
+You are a Senior Enterprise Frontend Architect and UI/UX Engineer.
+
+The backend for PharmaTrack has already been fully implemented and verified.
+
+Backend Features Already Available:
+
+- JWT Authentication
+- IAM (Identity & Access Management)
+- RBAC
+- Electronic Signatures
+- Workflow Engine
+- Audit Service
+- Integrity Verification
+- Notification Service
+- Clinical Trial Management
+- Subject Enrollment
+- Batch Manufacturing
+- Quality Control
+- Supply Chain
+- Deviation & CAPA
+- Regulatory Affairs
+
+You must now build the frontend and integrate it with the existing backend APIs.
+
+---
+
+# Global UI Requirements
+
+## Application Type
+
+Enterprise Pharmaceutical Management Platform
+
+Reference Applications:
+
+- Veeva
+- SAP Fiori
+- ServiceNow
+- Oracle Clinical
+- Workday
+- TrackWise
+- MasterControl
+
+## UI Style
+
+- Professional
+- Enterprise Grade
+- Compliance Focused
+- Table Driven
+- Responsive
+- Clean Layout
+- No Consumer Style UI
+- No Emojis
+
+## Color Palette
+
+Primary:
+
+```text
+#CE5200
+```
+
+Secondary:
+
+```text
+#562200
+```
+
+## Common Standards
+
+### Hover Color
+
+Apply globally:
+
+```text
+Light Orange
+```
+
+### Tooltip Style
+
+Apply globally:
+
+- Black Background
+- White Text
+- Rounded Corners
+- Enterprise Styling
+
+### Pagination
+
+Every module must support pagination.
+
+### Scrolling
+
+Remove unnecessary scrollbars.
+
+Especially:
+
+- View Popups
+- Create Popups
+- Modal Screens
+
+### Create Buttons
+
+Format:
+
+```text
+[+Create User]
+[+Create Trial]
+```
+
+Requirements:
+
+- Minimal spacing between icon and text
+- Bold font
+- Consistent throughout application
+
+### Filters
+
+Every status/module filter must contain:
+
+Filter Icon
+
+Example:
+
+```text
+🔽 Filter by Status
+🔽 Filter by Module
+```
+
+Replace dropdown labels:
+
+```text
+Status
+```
+
+with
+
+```text
+Filter by Status
+```
+
+Must include:
+
+```text
+All
+```
+
+option in every filter.
+
+---
+
+# RBAC
+
+Implement permission-based access control.
+
+Do NOT hard-code roles.
+
+Use permissions returned from backend.
+
+## Module Visibility
+
+### Admin
+
+Administration
+
+- Dashboard
+- Users
+- Roles
+- Permissions
+- Products
+- Sites
+- Electronic Signatures
+
+Audit
+
+- Dashboard
+- Events
+- Integrity
+- Reports
+
+### Researcher
+
+- Clinical Trials
+- Subjects
+
+### Investigator
+
+- Clinical Trials
+- Subjects
+
+### QA Analyst
+
+- Batch Manufacturing
+- Deviation & CAPA
+
+### Manufacturing Supervisor
+
+- Batch Manufacturing
+
+### Supply Chain
+
+- Supply Chain
+
+### Regulatory Officer
+
+- Regulatory Affairs
+
+### Auditor
+
+- Audit Dashboard
+- Audit Events
+- Integrity Monitoring
+- Reports
+
+---
+
+# Login Module
+
+## Existing Admin User
+
+Admin Bootstrap already exists.
+
+Authentication must use backend JWT.
+
+Validate login properly.
+
+## Password Validation
+
+Password requires:
+
+- Minimum 8 characters
+- At least 1 uppercase character
+- At least 1 symbol
+- At least 1 number
+
+---
+
+## Password Visibility
+
+Current Design Issue:
+
+Two eye icons exist.
+
+Required:
+
+Only one eye icon.
+
+---
+
+# Forgot Password
+
+Design and implement complete flow.
+
+## Screen 1
+
+Forgot Password
+
+Fields:
+
+```text
+Email Address
+```
+
+Button:
+
+```text
+Send Reset Link
+```
+
+---
+
+## Screen 2
+
+Reset Password
+
+Fields:
+
+```text
+New Password
+
+Confirm New Password
+```
+
+Button:
+
+```text
+Reset Password
+```
+
+---
+
+## Flow
+
+Forgot Password
+↓
+Enter Email
+↓
+Reset Link Sent
+↓
+User Clicks Link
+↓
+Reset Password Page
+↓
+Password Updated
+↓
+Redirect To Login
+
+---
+
+## Background
+
+Use Gradient Background
+
+For:
+
+- Login
+- Forgot Password
+- Reset Password
+
+---
+
+# IAM Module
+
+## Administration Sidebar
+
+Add:
+
+- Products
+- Sites
+
+under Administration.
+
+---
+
+# Product Management
+
+Admin creates products.
+
+Fields:
+
+- Product Name
+- Storage Condition
+- Min Threshold
+- Max Threshold
+
+Primary Key:
+
+```text
+Product ID
+```
+
+Auto Generated
+
+Do not allow manual entry.
+
+---
+
+# Site Management
+
+Admin creates sites.
+
+Fields:
+
+- Site Name
+- Country
+
+Primary Key:
+
+```text
+Site ID
+```
+
+Auto Generated
+
+Do not show Site ID in frontend.
+
+---
+
+# User Management
+
+## Site Mapping
+
+Replace:
+
+```text
+Site ID
+```
+
+with
+
+```text
+Site Name
+```
+
+Frontend must display:
+
+Site Name Dropdown
+
+Backend stores:
+
+Site ID
+
+Mapping occurs automatically.
+
+No IDs visible to users.
+
+---
+
+## Create User
+
+### Name
+
+Show character count while typing.
+
+Example:
+
+```text
+15 / 100 Characters
+```
+
+---
+
+### Email
+
+Add validation.
+
+---
+
+### Roles
+
+Roles must auto-fetch from backend.
+
+Display as dropdown.
+
+---
+
+### Phone Number
+
+Include:
+
+Country Code Selector
+
+Validation:
+
+Exactly 10 digits.
+
+---
+
+### User Status Filters
+
+Use:
+
+```text
+Filter By Status
+```
+
+with filter icon.
+
+Include:
+
+- All
+- Active
+- Deactivated
+
+---
+
+### Actions Menu
+
+If User Active:
+
+```text
+View
+Edit
+Deactivate
+```
+
+If User Deactivated:
+
+```text
+View
+Edit
+Reactivate
+```
+
+Never show:
+
+```text
+Deactivate + Reactivate
+```
+
+together.
+
+---
+
+## Edit User
+
+Remove:
+
+```text
+Phone Number
+```
+
+field.
+
+Replace Site ID with Site Name dropdown.
+
+---
+
+# Electronic Signatures
+
+Remove:
+
+```text
+Signature Method
+```
+
+from View Signature Details.
+
+---
+
+## Signature Reflection
+
+Signatures generated from:
+
+- Clinical Trial
+- Subject Enrollment
+- Batch
+- CAPA
+- Regulatory
+
+must automatically reflect in Administration > Electronic Signatures.
+
+---
+
+## Export
+
+Implement:
+
+```text
+Export PDF
+Export Excel
+```
+
+for:
+
+- Users
+- Electronic Signatures
+
+Integrate with backend APIs.
+
+---
+
+# Audit Module
+
+## Dashboard
+
+KPI Cards:
+
+- Total Audit Events
+- Verified Events
+- Tampered Events
+- Verification Errors
+- Events Today
+- Active Modules
+
+---
+
+## Verify Integrity
+
+Add:
+
+```text
+Verify Integrity
+```
+
+button.
+
+Integrate backend API.
+
+---
+
+## Filters
+
+Replace:
+
+```text
+Module
+Action
+```
+
+with
+
+```text
+Filter by Module
+Filter by Action
+```
+
+Include:
+
+```text
+All
+```
+
+option.
+
+---
+
+# Clinical Trial Module
+
+## View Trial
+
+Default tab:
+
+```text
+Protocol
+```
+
+Tabs:
+
+```text
+Protocol
+Site
+```
+
+Display side-by-side tab navigation.
+
+Do NOT navigate away.
+
+Users can switch tabs on same page.
+
+---
+
+## Trial Status Workflow
+
+Statuses:
+
+- Draft
+- Active
+- Suspended
+- Completed
+- Terminated
+
+Draft:
+
+Show:
+
+```text
+Send
+```
+
+only.
+
+Click Send:
+
+Draft → Active
+
+After Active:
+
+Show:
+
+```text
+Filter
+```
+
+Dropdown:
+
+- Suspended
+- Completed
+- Terminated
+
+Completed / Terminated:
+
+Hide Send and Filter.
+
+---
+
+# Subject Enrollment
+
+Remove dashboard tabs:
+
+- Visits
+- Adverse Events
+
+They should be accessed through:
+
+Subject
+↓
+View
+↓
+Subject Detail Page
+
+Tabs:
+
+- Subject Details
+- Visits
+- Adverse Events
+
+---
+
+# Notifications
+
+Replace:
+
+```text
+Alerts
+Alert Logs
+```
+
+with
+
+```text
+Notifications
+```
+
+Remove Action column.
+
+Move Status to last column.
+
+---
+
+## Notification Status Workflow
+
+Default:
+
+```text
+Unread
+```
+
+Button States:
+
+Unread
+↓
+Read
+↓
+Dismissed
+
+Click toggles between states.
+
+---
+
+## Notification Bell
+
+Show:
+
+Real-time unread count.
+
+Clicking Bell:
+
+Navigate to user-specific notifications.
+
+Only notifications for the logged-in user should appear.
+
+---
+
+# Batch Manufacturing
+
+## Batch Status Workflow
+
+Statuses:
+
+- InProgress
+- QCHold
+- Released
+- Recalled
+- Rejected
+
+Default:
+
+InProgress
+
+Send:
+
+InProgress → QCHold
+
+Then show Filter.
+
+Filter options:
+
+- Released
+- Recalled
+- Rejected
+
+---
+
+## Batch View Tabs
+
+Tabs:
+
+```text
+QC Tests
+Raw Materials
+```
+
+Default:
+
+QC Tests
+
+Switch tabs on same page.
+
+No page navigation.
+
+---
+
+# Deviation Management
+
+## Reason
+
+Display Reason only.
+
+Tooltip:
+
+Deviation Code
+
+---
+
+## Related Entity
+
+Display:
+
+Entity Name only.
+
+Tooltip:
+
+Related Business Identifier
+
+Examples:
+
+- Batch Number
+- Shipment Number
+- Trial Code
+
+---
+
+## Impact
+
+Display icon only.
+
+Tooltip values:
+
+- Minor
+- Major
+- Critical
+
+---
+
+# Deviation Status
+
+- Open
+- Under Investigation
+- CAPA Created
+- Closed
+
+---
+
+# CAPA
+
+Tabs:
+
+- Details
+- Actions
+- Evidence
+- History
+
+---
+
+# Regulatory Affairs
+
+## Workflow
+
+Draft
+↓
+Submitted
+↓
+Under Review
+↓
+Approved
+
+OR
+
+Draft
+↓
+Submitted
+↓
+Under Review
+↓
+Rejected
+
+OR
+
+Submitted
+↓
+Withdrawn
+
+---
+
+## Tabs
+
+- Dossier
+- Milestones
+- Submission History
+
+---
+
+# Business Code Visibility Rule
+
+Do NOT display IDs anywhere.
+
+Show business identifiers only.
+
+Examples:
+
+Show:
+
+```text
+Site Name
+Trial Code
+Batch Number
+Shipment Number
+CAPA Code
+Deviation Code
+Dossier Code
+```
+
+Never show:
+
+```text
+Site ID
+Trial ID
+Batch ID
+Shipment ID
+```
+
+IDs are used only internally for backend mapping.
+
+---
+
+# Electronic Signature Mapping
+
+| Entity | Meaning | Role |
+|----------|----------|----------|
+| TrialProtocol | APPROVED | Investigator |
+| TrialSubject | REVIEWED | Researcher, Investigator |
+| BatchRecord | RELEASED | QAAnalyst |
+| CAPARecord | APPROVED | QAAnalyst |
+| RegulatoryDossier | APPROVED | RegulatoryOfficer |
+
+---
+
+# Workflow Approval Mapping
+
+| Entity | Transition | Role | Signature |
+|----------|----------|----------|----------|
+| TrialProtocol | Draft → Approved | Investigator | APPROVED |
+| TrialSubject | Enrolled → Reviewed | Researcher / Investigator | REVIEWED |
+| BatchRecord | QCH → REL | QAAnalyst | RELEASED |
+| CAPARecord | OPN/INP → CLS | QAAnalyst | APPROVED |
+| RegulatoryDossier | UnderReview → Approved | RegulatoryOfficer | APPROVED |
+| DrugShipment | Dispatched → InTransit | SupplyChain | None |
+
+---
+
+# Final Requirement
+
+Generate:
+
+- Complete frontend
+- Backend integration
+- RBAC integration
+- Workflow integration
+- Electronic Signature integration
+- Notification integration
+- Pagination everywhere
+- Export integration
+- Enterprise-grade UI
+
+Maintain one consistent application experience across all modules.
