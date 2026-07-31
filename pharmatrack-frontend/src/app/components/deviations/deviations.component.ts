@@ -9,104 +9,150 @@ import { AuthService } from '../../services/auth.service';
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="deviations-container">
-      <!-- Master View: Deviations list -->
-      <div class="master-panel" *ngIf="!selectedDeviation()">
-        <div class="panel-header">
+    <div class="deviations-page">
+
+      <!-- ============ MASTER VIEW: Deviations list ============ -->
+      <div *ngIf="!selectedDeviation()">
+        <div class="page-head">
           <div>
-            <h2>Deviation Registry & Investigation</h2>
-            <p>Log discrepancies, check impact levels, and launch CAPA correction procedures.</p>
+            <h2 class="page-title">Deviation &amp; CAPA Management</h2>
+            <p class="page-sub">Log discrepancies, assess impact levels, and launch CAPA correction procedures.</p>
           </div>
-          <div>
-            <button class="btn btn-primary" (click)="openCreateDeviationModal()">+Create Deviation</button>
+          <div class="spacer"></div>
+          <button class="btn btn-primary btn-create" (click)="openCreateDeviationModal()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Create Deviation
+          </button>
+        </div>
+
+        <!-- Filter row -->
+        <div class="filter-row">
+          <div class="input-search">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.7" y2="16.7"/></svg>
+            <input type="text" placeholder="Search deviations, entities, owners…">
+          </div>
+          <div class="filter-select">
+            <svg class="funnel" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+            <select aria-label="Filter by Status">
+              <option value="">All Statuses</option>
+              <option value="Open">Open</option>
+              <option value="Under Investigation">Under Investigation</option>
+              <option value="CAPA Created">CAPA Created</option>
+              <option value="Closed">Closed</option>
+            </select>
+            <svg class="caret" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
           </div>
         </div>
 
-        <div class="table-container">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Reason (Description)</th>
-                <th>Related Entity</th>
-                <th>Detection Date</th>
-                <th>Detected By</th>
-                <th>Impact</th>
-                <th>Status</th>
-                <th style="width: 100px;">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let dev of paginatedDeviations()">
-                <!-- Tooltip: Reason displays description and deviationId as tooltip -->
-                <td>
-                  <span class="tooltip">
-                    {{ dev.description | slice:0:30 }}{{ dev.description.length > 30 ? '...' : '' }}
-                    <span class="tooltiptext">Code: {{ dev.deviationId }}</span>
-                  </span>
-                </td>
-                <!-- Tooltip: Related Entity displays Entity Name and relatedEntityId as tooltip -->
-                <td>
-                  <span class="tooltip">
-                    {{ dev.relatedEntityType }}
-                    <span class="tooltiptext">ID: {{ dev.relatedEntityId }}</span>
-                  </span>
-                </td>
-                <td>{{ dev.detectionDate }}</td>
-                <td>Staff ID: {{ dev.detectedById }}</td>
-                <!-- Tooltip: Impact displays icon with severity tooltip -->
-                <td>
-                  <span class="tooltip font-large">
-                    <span *ngIf="dev.impact === 'Minor'">🟢</span>
-                    <span *ngIf="dev.impact === 'Major'">🟡</span>
-                    <span *ngIf="dev.impact === 'Critical'">🔴</span>
-                    <span class="tooltiptext">Impact: {{ dev.impact }}</span>
-                  </span>
-                </td>
-                <td>
-                  <span class="status-indicator" 
-                    [class.status-open]="dev.status === 'Open'"
-                    [class.status-investigating]="dev.status === 'Under Investigation'"
-                    [class.status-capa]="dev.status === 'CAPA Created'"
-                    [class.status-closed]="dev.status === 'Closed' || dev.status === 'CLS'">
-                    {{ dev.status }}
-                  </span>
-                </td>
-                <td>
-                  <button class="btn btn-secondary btn-sm" (click)="viewDeviationDetails(dev)">View Details</button>
-                </td>
-              </tr>
-              <tr *ngIf="deviations().length === 0">
-                <td colspan="7" class="empty-state">No deviations logged.</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        <!-- Table -->
+        <div class="table-card">
+          <div class="table-card-head">
+            <h3>Deviation Log</h3>
+            <span class="count">· {{ deviations().length }} total</span>
+          </div>
+          <div class="table-scroll">
+            <table class="table-fixed">
+              <thead>
+                <tr>
+                  <th style="width:26%">Reason</th>
+                  <th style="width:16%">Related Entity</th>
+                  <th style="width:14%">Detection Date</th>
+                  <th style="width:14%">Detected By</th>
+                  <th style="width:9%">Impact</th>
+                  <th style="width:12%">Status</th>
+                  <th style="width:9%">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let dev of paginatedDeviations()">
+                  <!-- Reason: text only, tooltip = Deviation Code -->
+                  <td>
+                    <span class="tooltip name-cell">
+                      {{ dev.description | slice:0:40 }}{{ dev.description.length > 40 ? '…' : '' }}
+                      <span class="tooltiptext">Code: {{ dev.deviationId }}</span>
+                    </span>
+                  </td>
+                  <!-- Related Entity: entity name only, tooltip = business identifier -->
+                  <td>
+                    <span class="tooltip">
+                      {{ dev.relatedEntityType }}
+                      <span class="tooltiptext">ID: {{ dev.relatedEntityId }}</span>
+                    </span>
+                  </td>
+                  <td>{{ dev.detectionDate }}</td>
+                  <td class="mono">Staff ID: {{ dev.detectedById }}</td>
+                  <!-- Impact: icon only, tooltip = severity -->
+                  <td>
+                    <span class="tooltip impact-icon">
+                      <span *ngIf="dev.impact === 'Minor'" class="impact-minor">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12l2.5 2.5L16 9"/></svg>
+                      </span>
+                      <span *ngIf="dev.impact === 'Major'" class="impact-major">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/><path d="M12 9v4M12 17h.01"/></svg>
+                      </span>
+                      <span *ngIf="dev.impact === 'Critical'" class="impact-critical">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12" y2="16"/></svg>
+                      </span>
+                      <span class="tooltiptext">Impact: {{ dev.impact }}</span>
+                    </span>
+                  </td>
+                  <td>
+                    <span class="badge-status"
+                      [class.badge-progress]="dev.status === 'Open'"
+                      [class.badge-submitted]="dev.status === 'Under Investigation'"
+                      [class.badge-rust]="dev.status === 'CAPA Created'"
+                      [class.badge-closed]="dev.status === 'Closed' || dev.status === 'CLS'">
+                      {{ dev.status }}
+                    </span>
+                  </td>
+                  <td>
+                    <button class="btn btn-outline btn-sm" (click)="viewDeviationDetails(dev)">View</button>
+                  </td>
+                </tr>
+                <tr *ngIf="deviations().length === 0">
+                  <td colspan="7" class="empty-state">No deviations logged.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
 
-        <!-- Pagination -->
-        <div class="pagination" *ngIf="deviations().length > 0">
-          <button [disabled]="page() === 1" (click)="page.set(page() - 1)">Previous</button>
-          <span>Page {{ page() }} of {{ totalPages() }}</span>
-          <button [disabled]="page() === totalPages()" (click)="page.set(page() + 1)">Next</button>
+          <!-- Pagination -->
+          <div class="table-footer" *ngIf="deviations().length > 0">
+            <span>Page {{ page() }} of {{ totalPages() }}</span>
+            <div class="pager">
+              <button [disabled]="page() === 1" (click)="page.set(page() - 1)" aria-label="Previous page">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+              </button>
+              <button [disabled]="page() === totalPages()" (click)="page.set(page() + 1)" aria-label="Next page">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
-      <!-- Detail View: Inline tabs for Deviation Details & CAPAs -->
-      <div class="detail-panel" *ngIf="selectedDeviation()">
-        <div class="detail-header">
-          <button class="btn btn-secondary" (click)="selectedDeviation.set(null)">← Back to Registry</button>
-          
-          <div class="header-title">
-            <h3>Deviation: {{ selectedDeviation().deviationId }}</h3>
-            <span class="status-indicator" 
-              [class.status-open]="selectedDeviation().status === 'Open'"
-              [class.status-investigating]="selectedDeviation().status === 'Under Investigation'"
-              [class.status-capa]="selectedDeviation().status === 'CAPA Created'"
-              [class.status-closed]="selectedDeviation().status === 'Closed' || selectedDeviation().status === 'CLS'">
+      <!-- ============ DETAIL VIEW ============ -->
+      <div *ngIf="selectedDeviation()">
+        <div class="breadcrumb">
+          <a (click)="selectedDeviation.set(null)">Deviations</a> &nbsp;/&nbsp; <b>{{ selectedDeviation().deviationId }}</b>
+        </div>
+
+        <div class="detail-head-row">
+          <button class="btn btn-secondary btn-sm" (click)="selectedDeviation.set(null)">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+            Back to Registry
+          </button>
+          <div class="detail-title-wrap">
+            <h2 class="page-title">Deviation: {{ selectedDeviation().deviationId }}</h2>
+            <span class="badge-status"
+              [class.badge-progress]="selectedDeviation().status === 'Open'"
+              [class.badge-submitted]="selectedDeviation().status === 'Under Investigation'"
+              [class.badge-rust]="selectedDeviation().status === 'CAPA Created'"
+              [class.badge-closed]="selectedDeviation().status === 'Closed' || selectedDeviation().status === 'CLS'">
               {{ selectedDeviation().status }}
             </span>
           </div>
-
-          <!-- Workflow Controls -->
+          <div class="spacer"></div>
           <div class="workflow-controls" *ngIf="selectedDeviation().status !== 'Closed'">
             <button class="btn btn-primary" *ngIf="selectedDeviation().status === 'Open'" (click)="updateDeviationStatus('Under Investigation')">
               Start Investigation
@@ -114,105 +160,131 @@ import { AuthService } from '../../services/auth.service';
           </div>
         </div>
 
-        <!-- Detail Tabs -->
-        <div class="detail-tabs">
-          <button [class.active]="detailTab() === 'details'" (click)="detailTab.set('details')">Deviation Details</button>
-          <button [class.active]="detailTab() === 'capa'" (click)="detailTab.set('capa')">CAPA Records</button>
-          <button [class.active]="detailTab() === 'signatures'" (click)="detailTab.set('signatures')">Workflow Signatures</button>
+        <!-- Top-level tabs -->
+        <div class="tab-bar">
+          <button class="tab-btn" [class.active]="detailTab() === 'details'" (click)="detailTab.set('details')">Deviation Details</button>
+          <button class="tab-btn" [class.active]="detailTab() === 'capa'" (click)="detailTab.set('capa')">CAPA Records</button>
+          <button class="tab-btn" [class.active]="detailTab() === 'signatures'" (click)="detailTab.set('signatures')">Workflow Signatures</button>
         </div>
 
-        <!-- Tab contents (No navigation away) -->
-        <div class="tab-card">
+        <div class="table-card tab-panel">
           <div class="alert alert-error" *ngIf="errorMsg()">{{ errorMsg() }}</div>
           <div class="alert alert-success" *ngIf="successMsg()">{{ successMsg() }}</div>
 
           <!-- 1. DEVIATION DETAILS TAB -->
-          <div *ngIf="detailTab() === 'details'" class="grid-details">
-            <div class="detail-item"><span class="label">Deviation Code:</span> {{ selectedDeviation().deviationId }}</div>
-            <div class="detail-item"><span class="label">Detection Date:</span> {{ selectedDeviation().detectionDate }}</div>
-            <div class="detail-item"><span class="label">Assigned Entity Type:</span> {{ selectedDeviation().relatedEntityType }}</div>
-            <div class="detail-item"><span class="label">Assigned Entity ID/Code:</span> {{ selectedDeviation().relatedEntityId }}</div>
-            <div class="detail-item"><span class="label">Impact Severity:</span> {{ selectedDeviation().impact }}</div>
-            <div class="detail-item"><span class="label">Logged By Staff ID:</span> {{ selectedDeviation().detectedById }}</div>
-            <div class="detail-item" style="grid-column: span 2;">
-              <span class="label">Detailed Deviation Reason:</span> 
+          <div *ngIf="detailTab() === 'details'" class="detail-grid">
+            <div class="detail-field"><label>Deviation Code</label><div class="value">{{ selectedDeviation().deviationId }}</div></div>
+            <div class="detail-field"><label>Detection Date</label><div class="value">{{ selectedDeviation().detectionDate }}</div></div>
+            <div class="detail-field"><label>Related Entity Type</label><div class="value">{{ selectedDeviation().relatedEntityType }}</div></div>
+            <div class="detail-field"><label>Related Entity ID / Code</label><div class="value">{{ selectedDeviation().relatedEntityId }}</div></div>
+            <div class="detail-field"><label>Impact Severity</label><div class="value">{{ selectedDeviation().impact }}</div></div>
+            <div class="detail-field"><label>Logged By Staff ID</label><div class="value">{{ selectedDeviation().detectedById }}</div></div>
+            <div class="detail-field" style="grid-column:1 / -1">
+              <label>Detailed Deviation Reason</label>
               <p class="description-text">{{ selectedDeviation().description }}</p>
             </div>
           </div>
 
-          <!-- 2. CAPAS TAB -->
+          <!-- 2. CAPA RECORDS TAB -->
           <div *ngIf="detailTab() === 'capa'">
             <div class="tab-action-bar">
-              <h4>Corrective and Preventive Action Logs</h4>
-              <button class="btn btn-secondary btn-sm" (click)="openCreateCapaModal()" [disabled]="selectedDeviation().status === 'Closed'">
-                +Create CAPA
+              <h3>Corrective &amp; Preventive Actions</h3>
+              <div class="spacer"></div>
+              <button class="btn btn-primary btn-sm" (click)="openCreateCapaModal()" [disabled]="selectedDeviation().status === 'Closed'">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Create CAPA
               </button>
             </div>
 
-            <!-- List CAPA records associated with the deviation -->
-            <div class="capa-records-list" style="margin-top: 16px;">
-              <div class="capa-row-card" *ngFor="let capa of capas()">
-                <div class="capa-card-header">
-                  <h5>CAPA Code: {{ capa.capaId }}</h5>
-                  <div class="capa-actions-area">
-                    <span class="status-indicator" [class.status-active]="capa.status === 'Closed'" [class.status-inactive]="capa.status !== 'Closed'">
+            <div class="capa-list">
+              <div class="capa-card" *ngFor="let capa of capas()">
+                <div class="capa-card-head">
+                  <h4>CAPA Code: {{ capa.capaId }}</h4>
+                  <div class="capa-head-actions">
+                    <span class="badge-status"
+                      [class.badge-closed]="capa.status === 'Closed'"
+                      [class.badge-progress]="capa.status !== 'Closed'">
                       {{ capa.status }}
                     </span>
-                    <button class="btn btn-secondary btn-sm" *ngIf="capa.status !== 'Closed'" (click)="openSignatureModal(capa)">
-                      Sign & Close CAPA
+                    <button class="btn btn-outline btn-sm" *ngIf="capa.status !== 'Closed'" (click)="openSignatureModal(capa)">
+                      Sign &amp; Close
                     </button>
                   </div>
                 </div>
 
-                <!-- CAPA tabs: Details, Actions, Evidence, History -->
-                <div class="capa-tabs-nav">
-                  <button [class.active]="capaTabs[capa.capaId] === 'details'" (click)="capaTabs[capa.capaId] = 'details'">Details</button>
-                  <button [class.active]="capaTabs[capa.capaId] === 'actions'" (click)="capaTabs[capa.capaId] = 'actions'">Actions</button>
-                  <button [class.active]="capaTabs[capa.capaId] === 'evidence'" (click)="capaTabs[capa.capaId] = 'evidence'">Evidence</button>
+                <!-- CAPA sub-tabs: Details, Actions, Evidence, History -->
+                <div class="subtab-bar">
+                  <button class="subtab-btn" [class.active]="capaTabs[capa.capaId] === 'details'" (click)="capaTabs[capa.capaId] = 'details'">Details</button>
+                  <button class="subtab-btn" [class.active]="capaTabs[capa.capaId] === 'actions'" (click)="capaTabs[capa.capaId] = 'actions'">Actions</button>
+                  <button class="subtab-btn" [class.active]="capaTabs[capa.capaId] === 'evidence'" (click)="capaTabs[capa.capaId] = 'evidence'">Evidence</button>
+                  <button class="subtab-btn" [class.active]="capaTabs[capa.capaId] === 'history'" (click)="capaTabs[capa.capaId] = 'history'">History</button>
                 </div>
 
-                <div class="capa-tab-content">
+                <div class="subtab-content">
                   <!-- Details -->
-                  <div *ngIf="capaTabs[capa.capaId] === 'details'" class="grid-details">
-                    <div class="detail-item"><span class="label">Assigned To Staff ID:</span> {{ capa.assignedToId }}</div>
-                    <div class="detail-item"><span class="label">Target Due Date:</span> {{ capa.dueDate }}</div>
-                    <div class="detail-item"><span class="label">Investigation Root Cause:</span> {{ capa.rootCause }}</div>
-                    <div class="detail-item" *ngIf="capa.closedDate"><span class="label">Closed Date:</span> {{ capa.closedDate }}</div>
+                  <div *ngIf="capaTabs[capa.capaId] === 'details'" class="detail-grid">
+                    <div class="detail-field"><label>Assigned To Staff ID</label><div class="value">{{ capa.assignedToId }}</div></div>
+                    <div class="detail-field"><label>Target Due Date</label><div class="value">{{ capa.dueDate }}</div></div>
+                    <div class="detail-field"><label>Investigation Root Cause</label><div class="value">{{ capa.rootCause }}</div></div>
+                    <div class="detail-field" *ngIf="capa.closedDate"><label>Closed Date</label><div class="value">{{ capa.closedDate }}</div></div>
                   </div>
 
                   <!-- Actions -->
-                  <div *ngIf="capaTabs[capa.capaId] === 'actions'" class="grid-details">
-                    <div class="detail-item" style="grid-column: span 2;">
-                      <span class="label">Corrective Action Plan (CAP):</span>
+                  <div *ngIf="capaTabs[capa.capaId] === 'actions'" class="detail-grid">
+                    <div class="detail-field" style="grid-column:1 / -1">
+                      <label>Corrective Action Plan (CAP)</label>
                       <p class="description-text">{{ capa.correctiveAction }}</p>
                     </div>
-                    <div class="detail-item" style="grid-column: span 2;">
-                      <span class="label">Preventive Action Plan (PAP):</span>
+                    <div class="detail-field" style="grid-column:1 / -1">
+                      <label>Preventive Action Plan (PAP)</label>
                       <p class="description-text">{{ capa.preventiveAction }}</p>
                     </div>
                   </div>
 
                   <!-- Evidence -->
                   <div *ngIf="capaTabs[capa.capaId] === 'evidence'">
-                    <p style="font-size: 13.5px; color: #7a6a5e; margin: 0 0 10px;">Verification Evidence Manifest & Attachments</p>
+                    <p class="subtab-note">Verification Evidence Manifest &amp; Attachments</p>
                     <div class="evidence-block">
-                      📄 Corrective verification trial audit log signed. Integrity checked intact.
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><polyline points="14 2 14 8 20 8"/></svg>
+                      Corrective verification trial audit log signed. Integrity checked intact.
+                    </div>
+                  </div>
+
+                  <!-- History -->
+                  <div *ngIf="capaTabs[capa.capaId] === 'history'">
+                    <p class="subtab-note">Electronic Signature History for this CAPA</p>
+                    <div class="table-scroll">
+                      <table>
+                        <thead>
+                          <tr><th>Signer</th><th>Meaning</th><th>Ver.</th><th>Signed At</th></tr>
+                        </thead>
+                        <tbody>
+                          <ng-container *ngFor="let s of signatureHistory()">
+                            <tr *ngIf="s.entityId === capa.capaId">
+                              <td>{{ s.signerName }}</td>
+                              <td><span class="badge-status badge-rust">{{ s.meaning }}</span></td>
+                              <td>v{{ s.entityVersion }}</td>
+                              <td>{{ s.signedAt | date:'medium' }}</td>
+                            </tr>
+                          </ng-container>
+                        </tbody>
+                      </table>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div *ngIf="capas().length === 0" class="empty-state" style="border: 1px solid #ece4dc; border-radius: 8px;">
+              <div *ngIf="capas().length === 0" class="empty-state boxed">
                 No CAPA procedures initialized for this deviation.
               </div>
             </div>
           </div>
 
-          <!-- 3. SIGNATURES LOG TAB -->
+          <!-- 3. WORKFLOW SIGNATURES TAB -->
           <div *ngIf="detailTab() === 'signatures'">
-            <h4>Electronic Signature History Logs</h4>
-            <div class="table-container" style="margin-top: 12px;">
-              <table class="data-table">
+            <div class="tab-action-bar"><h3>Electronic Signature History</h3></div>
+            <div class="table-scroll">
+              <table>
                 <thead>
                   <tr>
                     <th>Record ID</th>
@@ -220,19 +292,17 @@ import { AuthService } from '../../services/auth.service';
                     <th>Meaning</th>
                     <th>Ver.</th>
                     <th>Signed At</th>
-                    <th>SHA-256 Checksum Hash</th>
+                    <th>SHA-256 Checksum</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr *ngFor="let s of signatureHistory()">
-                    <td style="font-weight: 600;">{{ s.entityId }} ({{ s.entityType }})</td>
+                    <td class="name-cell">{{ s.entityId }} ({{ s.entityType }})</td>
                     <td>{{ s.signerName }}</td>
-                    <td><span class="role-pill">{{ s.meaning }}</span></td>
+                    <td><span class="badge-status badge-rust">{{ s.meaning }}</span></td>
                     <td>v{{ s.entityVersion }}</td>
                     <td>{{ s.signedAt | date:'medium' }}</td>
-                    <td style="font-family: monospace; font-size: 11px; max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" [title]="s.signatureHash">
-                      {{ s.signatureHash }}
-                    </td>
+                    <td class="hash-cell" [title]="s.signatureHash">{{ s.signatureHash }}</td>
                   </tr>
                   <tr *ngIf="signatureHistory().length === 0">
                     <td colspan="6" class="empty-state">No electronic signatures applied to these records.</td>
@@ -244,23 +314,28 @@ import { AuthService } from '../../services/auth.service';
         </div>
       </div>
 
-      <!-- ── MODALS ── -->
+      <!-- ══════════════ MODALS ══════════════ -->
 
       <!-- 1. CREATE DEVIATION MODAL -->
       <div class="modal-overlay" *ngIf="showCreateDeviationModal()">
-        <div class="modal-card">
-          <div class="modal-header">
-            <h3>+Create New Deviation Log</h3>
-            <button class="close-modal" (click)="showCreateDeviationModal.set(false)">×</button>
-          </div>
+        <div class="modal">
+          <button class="modal-close-x" (click)="confirmDiscard() && showCreateDeviationModal.set(false)" aria-label="Close">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+          <h2>Create Deviation Log</h2>
+          <p class="modal-sub">Log a quality deviation with impact assessment</p>
           <form (ngSubmit)="handleCreateDeviation()">
-            <div class="field">
-              <label>Deviation Code (Auto-Generated)</label>
-              <input type="text" name="deviationId" [value]="createDeviationForm.deviationId" disabled style="background: #f7f5f2; font-weight: 700; color: #562200;">
-            </div>
-            <div class="form-row">
+            <div class="form-grid">
               <div class="field">
-                <label>Related Entity Type</label>
+                <label>Deviation Code</label>
+                <input type="text" name="deviationId" [value]="createDeviationForm.deviationId" disabled>
+                <span class="autofill-hint">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  Auto-generated
+                </span>
+              </div>
+              <div class="field">
+                <label>Related Entity Type <span class="req">*</span></label>
                 <select name="relType" [(ngModel)]="createDeviationForm.relatedEntityType" required>
                   <option value="BatchRecord">Manufacturing Batch (BatchRecord)</option>
                   <option value="DrugShipment">Supply Shipment (DrugShipment)</option>
@@ -268,40 +343,35 @@ import { AuthService } from '../../services/auth.service';
                 </select>
               </div>
               <div class="field">
-                <label>Related Entity Identifier / Code</label>
+                <label>Related Entity ID / Code <span class="req">*</span></label>
                 <input type="text" name="relId" [(ngModel)]="createDeviationForm.relatedEntityId" placeholder="e.g. BATCH-8012" required>
               </div>
-            </div>
-            <div class="form-row">
               <div class="field">
-                <label>Impact Severity</label>
+                <label>Impact Severity <span class="req">*</span></label>
                 <select name="impact" [(ngModel)]="createDeviationForm.impact" required>
-                  <option value="Minor">Minor (Green)</option>
-                  <option value="Major">Major (Yellow)</option>
-                  <option value="Critical">Critical (Red)</option>
+                  <option value="Minor">Minor</option>
+                  <option value="Major">Major</option>
+                  <option value="Critical">Critical</option>
                 </select>
               </div>
               <div class="field">
-                <label>Detected By Staff ID</label>
+                <label>Detected By Staff ID <span class="req">*</span></label>
                 <input type="number" name="detBy" [(ngModel)]="createDeviationForm.detectedById" required>
               </div>
-            </div>
-            <div class="form-row">
               <div class="field">
-                <label>Detection Date</label>
+                <label>Detection Date <span class="req">*</span></label>
                 <input type="date" name="detDate" [(ngModel)]="createDeviationForm.detectionDate" required>
               </div>
               <div class="field">
                 <label>Status</label>
-                <input type="text" name="status" value="Open" disabled style="background: #f7f5f2;">
+                <input type="text" name="status" value="Open" disabled>
+              </div>
+              <div class="field full">
+                <label>Description (Reason) <span class="req">*</span></label>
+                <input type="text" name="desc" [(ngModel)]="createDeviationForm.description" placeholder="Temperature excursion of +2°C noted during unloading." required>
               </div>
             </div>
-            <div class="field">
-              <label>Detailed Description of Discrepancy (Reason)</label>
-              <input type="text" name="desc" [(ngModel)]="createDeviationForm.description" placeholder="Temperature excursion of +2°C noted during unloading." required>
-            </div>
             <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" (click)="showCreateDeviationModal.set(false)">Cancel</button>
               <button type="submit" class="btn btn-primary">Log Deviation</button>
             </div>
           </form>
@@ -310,67 +380,70 @@ import { AuthService } from '../../services/auth.service';
 
       <!-- 2. CREATE CAPA MODAL -->
       <div class="modal-overlay" *ngIf="showCreateCapaModal()">
-        <div class="modal-card">
-          <div class="modal-header">
-            <h3>+Create CAPA Corrective Plan</h3>
-            <button class="close-modal" (click)="showCreateCapaModal.set(false)">×</button>
-          </div>
+        <div class="modal">
+          <button class="modal-close-x" (click)="confirmDiscard() && showCreateCapaModal.set(false)" aria-label="Close">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+          <h2>Create CAPA</h2>
+          <p class="modal-sub">Add a corrective and preventive action plan</p>
           <form (ngSubmit)="handleCreateCapa()">
-            <div class="field">
-              <label>CAPA Identifier (Auto-Generated)</label>
-              <input type="text" name="capaId" [value]="createCapaForm.capaId" disabled style="background: #f7f5f2; font-weight: 700; color: #562200;">
-            </div>
-            <div class="form-row">
+            <div class="form-grid">
               <div class="field">
-                <label>Assigned Staff ID</label>
+                <label>CAPA Code</label>
+                <input type="text" name="capaId" [value]="createCapaForm.capaId" disabled>
+                <span class="autofill-hint">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  Auto-generated
+                </span>
+              </div>
+              <div class="field">
+                <label>Assigned Staff ID <span class="req">*</span></label>
                 <input type="number" name="capaAss" [(ngModel)]="createCapaForm.assignedToId" required>
               </div>
               <div class="field">
-                <label>Target Due Date</label>
+                <label>Target Due Date <span class="req">*</span></label>
                 <input type="date" name="capaDue" [(ngModel)]="createCapaForm.dueDate" required>
               </div>
-            </div>
-            <div class="field">
-              <label>Investigation Root Cause Analysis</label>
-              <input type="text" name="capaRoot" [(ngModel)]="createCapaForm.rootCause" placeholder="Faulty temperature sensor battery calibration." required>
-            </div>
-            <div class="field">
-              <label>Corrective Action Plan (CAP)</label>
-              <input type="text" name="capaCorr" [(ngModel)]="createCapaForm.correctiveAction" placeholder="Replaced battery and re-calibrated sensors immediately." required>
-            </div>
-            <div class="field">
-              <label>Preventive Action Plan (PAP)</label>
-              <input type="text" name="capaPrev" [(ngModel)]="createCapaForm.preventiveAction" placeholder="Scheduled bi-monthly battery integrity verification pass." required>
+              <div class="field full">
+                <label>Investigation Root Cause <span class="req">*</span></label>
+                <input type="text" name="capaRoot" [(ngModel)]="createCapaForm.rootCause" placeholder="Faulty temperature sensor battery calibration." required>
+              </div>
+              <div class="field full">
+                <label>Corrective Action Plan (CAP) <span class="req">*</span></label>
+                <input type="text" name="capaCorr" [(ngModel)]="createCapaForm.correctiveAction" placeholder="Replaced battery and re-calibrated sensors immediately." required>
+              </div>
+              <div class="field full">
+                <label>Preventive Action Plan (PAP) <span class="req">*</span></label>
+                <input type="text" name="capaPrev" [(ngModel)]="createCapaForm.preventiveAction" placeholder="Scheduled bi-monthly battery integrity verification pass." required>
+              </div>
             </div>
             <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" (click)="showCreateCapaModal.set(false)">Cancel</button>
               <button type="submit" class="btn btn-primary">Initialize CAPA</button>
             </div>
           </form>
         </div>
       </div>
 
-      <!-- 3. ELECTRONIC SIGNATURE DIALOG FOR CAPA CLOSING -->
+      <!-- 3. ELECTRONIC SIGNATURE MODAL -->
       <div class="modal-overlay" *ngIf="showSignatureModal()">
-        <div class="modal-card" style="max-width: 420px;">
-          <div class="modal-header">
-            <h3>Electronic Signature Verification</h3>
-            <button class="close-modal" (click)="showSignatureModal.set(false)">×</button>
-          </div>
-          <div class="details-pane" style="font-size: 13.5px; margin-bottom: 8px;">
-            <p>You are applying a legally binding electronic signature to verify and CLOSE this CAPA record.</p>
-            <div class="detail-item"><span class="label">CAPA ID:</span> {{ selectedCapaForSign()?.capaId }}</div>
-            <div class="detail-item"><span class="label">Meaning:</span> APPROVED</div>
+        <div class="modal" style="max-width:460px">
+          <button class="modal-close-x" (click)="confirmDiscard() && showSignatureModal.set(false)" aria-label="Close">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+          <h2>Electronic Signature</h2>
+          <p class="modal-sub">Apply a legally binding e-signature to verify and CLOSE this CAPA record.</p>
+          <div class="detail-grid" style="grid-template-columns:1fr 1fr;margin-bottom:20px">
+            <div class="detail-field"><label>CAPA Code</label><div class="value">{{ selectedCapaForSign()?.capaId }}</div></div>
+            <div class="detail-field"><label>Meaning</label><div class="value">APPROVED</div></div>
           </div>
           <form (ngSubmit)="executeSignatureTransition()">
             <div class="field">
-              <label>Verify Identity Password</label>
+              <label>Verify Identity Password <span class="req">*</span></label>
               <input type="password" name="sigPwd" [(ngModel)]="signaturePassword" placeholder="Enter your credentials password" required>
             </div>
             <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" (click)="showSignatureModal.set(false)">Cancel</button>
               <button type="submit" class="btn btn-primary" [disabled]="signing()">
-                {{ signing() ? 'Signing...' : 'Verify & Close' }}
+                {{ signing() ? 'Signing…' : 'Verify & Close' }}
               </button>
             </div>
           </form>
@@ -379,445 +452,131 @@ import { AuthService } from '../../services/auth.service';
     </div>
   `,
   styles: [`
-    .deviations-container {
-      background: #ffffff;
-      border: 1px solid #ece4dc;
-      border-radius: 14px;
-      padding: 32px;
+    :host { display: block; }
+    .deviations-page { color: var(--text); }
+    .spacer { flex: 1; }
+    .btn-sm { padding: 7px 12px; font-size: 13px; }
+
+    /* Status filter — single funnel dropdown */
+    .filter-select {
+      position: relative; display: inline-flex; align-items: center; gap: 8px;
+      border: 1px solid var(--border); border-radius: var(--radius-sm);
+      background: #fff; padding: 0 12px; min-width: 200px;
     }
-    .panel-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 24px;
+    .filter-select .funnel { color: var(--text-dim); flex-shrink: 0; pointer-events: none; }
+    .filter-select .caret { color: var(--text-dim); flex-shrink: 0; margin-left: auto; pointer-events: none; }
+    .filter-select select {
+      appearance: none; -webkit-appearance: none; -moz-appearance: none;
+      border: none; background: transparent; outline: none;
+      font-family: inherit; font-size: 14px; color: var(--text);
+      padding: 11px 4px; flex: 1; width: 100%; cursor: pointer;
     }
-    .panel-header h2 {
-      font-family: 'Manrope', sans-serif;
-      font-size: 24px;
-      font-weight: 800;
-      color: #211611;
-      margin: 0 0 6px;
-    }
-    .panel-header p {
-      color: #7a6a5e;
-      font-size: 14px;
-      margin: 0;
-    }
-    .table-container {
-      overflow-x: auto;
-      margin-bottom: 20px;
-      border: 1px solid #ece4dc;
-      border-radius: 10px;
-    }
-    .data-table {
-      width: 100%;
-      border-collapse: collapse;
-      text-align: left;
-      font-size: 14px;
-    }
-    .data-table th {
-      background: #f7f5f2;
-      color: #211611;
-      font-weight: 700;
-      padding: 14px 16px;
-      border-bottom: 1px solid #ece4dc;
-    }
-    .data-table td {
-      padding: 14px 16px;
-      border-bottom: 1px solid #ece4dc;
-      color: #211611;
-      vertical-align: middle;
-    }
-    .status-indicator {
-      display: inline-block;
-      padding: 3px 10px;
-      border-radius: 6px;
-      font-size: 12px;
-      font-weight: 700;
-      text-transform: uppercase;
-      border: 1px solid transparent;
-    }
-    .status-open {
-      background: #fff8e1;
-      color: #f57f17;
-      border-color: #ffe082;
-    }
-    .status-investigating {
-      background: #e8f1fa;
-      color: #1d5f9e;
-      border-color: #bbdefb;
-    }
-    .status-capa {
-      background: #fff3e0;
-      color: #e65100;
-      border-color: #ffcc80;
-    }
-    .status-closed {
-      background: #e8f5e9;
-      color: #2e7d32;
-      border-color: #c8e6c9;
-    }
-    .font-large {
-      font-size: 18px;
-    }
-    /* GORGEOUS CUSTOM TOOLTIP (Black background, white text, rounded corners) */
-    .tooltip {
-      position: relative;
-      display: inline-block;
-      cursor: pointer;
-    }
+
+    /* Tooltip — black background, white text, rounded corners */
+    .tooltip { position: relative; display: inline-block; cursor: default; }
     .tooltip .tooltiptext {
-      visibility: hidden;
-      width: 160px;
-      background-color: #000000;
-      color: #ffffff;
-      text-align: center;
-      border-radius: 6px;
-      padding: 6px 10px;
-      position: absolute;
-      z-index: 100;
-      bottom: 125%;
-      left: 50%;
-      transform: translateX(-50%);
-      opacity: 0;
-      transition: opacity 0.2s ease, transform 0.2s ease;
-      font-size: 11px;
-      font-weight: 500;
+      visibility: hidden; opacity: 0;
+      position: absolute; z-index: 100;
+      bottom: 135%; left: 50%; transform: translateX(-50%);
+      background: #1e1008; color: #ffffff;
+      padding: 6px 10px; border-radius: 8px;
+      font-size: 11.5px; font-weight: 500; white-space: nowrap;
+      box-shadow: 0 6px 16px rgba(0,0,0,.25);
+      transition: opacity .15s ease;
       pointer-events: none;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     }
-    .tooltip:hover .tooltiptext {
-      visibility: visible;
-      opacity: 1;
+    .tooltip .tooltiptext::after {
+      content: ""; position: absolute; top: 100%; left: 50%;
+      transform: translateX(-50%);
+      border: 5px solid transparent; border-top-color: #1e1008;
     }
-    .pagination {
-      display: flex;
-      justify-content: flex-end;
-      align-items: center;
-      gap: 16px;
-      font-size: 13.5px;
-      color: #7a6a5e;
+    .tooltip:hover .tooltiptext { visibility: visible; opacity: 1; }
+
+    /* Impact icons (icon-only, colour by severity) */
+    .impact-icon { line-height: 0; }
+    .impact-icon > span { display: inline-flex; }
+    .impact-minor { color: #2f7d46; }
+    .impact-major { color: var(--warning); }
+    .impact-critical { color: var(--danger); }
+
+    /* Closed badge (green) — not present in global palette */
+    .badge-closed { background: #e4f3e9; color: #2f7d46; }
+
+    .mono { color: var(--text-dim); font-variant-numeric: tabular-nums; }
+    .empty-state { text-align: center; color: var(--text-dim); font-style: italic; padding: 30px !important; }
+    .empty-state.boxed { border: 1px dashed var(--border); border-radius: var(--radius-md); }
+
+    .pager button:disabled { opacity: .45; cursor: not-allowed; }
+
+    /* Breadcrumb link */
+    .breadcrumb a { cursor: pointer; }
+    .breadcrumb a:hover { color: var(--accent); }
+
+    /* Detail header */
+    .detail-head-row { display: flex; align-items: center; gap: 16px; margin: 4px 0 22px; flex-wrap: wrap; }
+    .detail-title-wrap { display: flex; align-items: center; gap: 12px; }
+    .detail-title-wrap .page-title { font-size: 22px; margin: 0; }
+
+    /* Top-level tabs */
+    .tab-bar { display: flex; gap: 4px; margin-bottom: 18px; border-bottom: 1px solid var(--border); }
+    .tab-btn {
+      background: none; border: none; border-bottom: 2px solid transparent;
+      padding: 11px 16px; font-family: inherit; font-size: 14px; font-weight: 600;
+      color: var(--text-dim); cursor: pointer;
     }
-    .pagination button {
-      background: #ffffff;
-      border: 1px solid #ece4dc;
-      padding: 6px 14px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: 600;
-      color: #211611;
+    .tab-btn:hover { color: var(--accent-dark); }
+    .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+    .tab-panel { padding: 26px; }
+
+    /* Sub-tabs (per CAPA) */
+    .subtab-bar { display: flex; gap: 6px; margin: 12px 0; flex-wrap: wrap; }
+    .subtab-btn {
+      background: none; border: 1px solid transparent; border-radius: var(--radius-sm);
+      padding: 6px 12px; font-family: inherit; font-size: 12.5px; font-weight: 600;
+      color: var(--text-dim); cursor: pointer;
     }
-    .pagination button:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-    .detail-panel {
-      text-align: left;
-    }
-    .detail-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 20px;
-      margin-bottom: 24px;
-      border-bottom: 1px solid #ece4dc;
-      padding-bottom: 16px;
-    }
-    .header-title {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    .header-title h3 {
-      font-family: 'Manrope', sans-serif;
-      margin: 0;
-      font-size: 20px;
-      font-weight: 800;
-      color: #211611;
-    }
-    .workflow-controls {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-    }
-    .detail-tabs {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 20px;
-    }
-    .detail-tabs button {
-      background: none;
-      border: none;
-      padding: 10px 18px;
-      font-size: 14px;
-      font-weight: 600;
-      color: #7a6a5e;
-      cursor: pointer;
-      border-radius: 6px;
-      transition: background 0.15s ease, color 0.15s ease;
-    }
-    .detail-tabs button:hover {
-      background: #fbe9de;
-      color: #CE5200;
-    }
-    .detail-tabs button.active {
-      background: #fbe9de;
-      color: #CE5200;
-      border: 1px solid #ece4dc;
-    }
-    .tab-card {
-      border: 1px solid #ece4dc;
-      border-radius: 12px;
-      padding: 24px;
-    }
-    .grid-details {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 20px;
-    }
-    .detail-item {
-      font-size: 14px;
-      color: #211611;
-    }
-    .detail-item .label {
-      font-weight: 700;
-      color: #7a6a5e;
-      display: inline-block;
-      width: 180px;
-    }
+    .subtab-btn:hover { color: var(--accent-dark); }
+    .subtab-btn.active { background: var(--accent-light); color: var(--accent-dark); }
+    .subtab-content { padding-top: 6px; }
+    .subtab-note { font-size: 13px; color: var(--text-dim); margin: 0 0 10px; }
+
+    .tab-action-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
+    .tab-action-bar h3 { margin: 0; font-size: 17px; font-weight: 800; font-family: 'Manrope', sans-serif; }
+
+    /* CAPA cards */
+    .capa-list { display: flex; flex-direction: column; gap: 18px; }
+    .capa-card { border: 1px solid var(--border); border-radius: var(--radius-md); padding: 18px 20px; background: #fff; }
+    .capa-card-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+    .capa-card-head h4 { margin: 0; font-size: 15px; font-weight: 800; color: var(--accent-dark); font-family: 'Manrope', sans-serif; }
+    .capa-head-actions { display: flex; align-items: center; gap: 12px; }
+
     .description-text {
-      background: #f7f5f2;
-      border: 1px solid #ece4dc;
-      padding: 12px;
-      border-radius: 6px;
-      font-size: 14px;
-      margin-top: 6px;
-    }
-    .tab-action-bar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid #ece4dc;
-      padding-bottom: 10px;
-      margin-bottom: 16px;
-    }
-    .tab-action-bar h4 {
-      margin: 0;
-      font-family: 'Manrope', sans-serif;
-      font-size: 16px;
-      font-weight: 800;
-    }
-    .capa-records-list {
-      display: flex;
-      flex-direction: column;
-      gap: 24px;
-    }
-    .capa-row-card {
-      border: 1px solid #ece4dc;
-      border-radius: 10px;
-      padding: 20px;
-      background: #ffffff;
-      box-shadow: 0 4px 12px rgba(86, 34, 0, 0.02);
-    }
-    .capa-card-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid #ece4dc;
-      padding-bottom: 12px;
-      margin-bottom: 12px;
-    }
-    .capa-card-header h5 {
-      margin: 0;
-      font-family: 'Manrope', sans-serif;
-      font-size: 15px;
-      font-weight: 800;
-      color: #562200;
-    }
-    .capa-actions-area {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    .capa-tabs-nav {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 12px;
-    }
-    .capa-tabs-nav button {
-      background: none;
-      border: none;
-      padding: 6px 12px;
-      font-size: 12.5px;
-      font-weight: 600;
-      color: #7a6a5e;
-      cursor: pointer;
-      border-radius: 4px;
-    }
-    .capa-tabs-nav button.active {
-      background: #fbe9de;
-      color: #CE5200;
-    }
-    .capa-tab-content {
-      padding: 10px 0 0;
+      background: var(--bg); border: 1px solid var(--border);
+      padding: 12px 14px; border-radius: var(--radius-sm);
+      font-size: 14px; margin: 8px 0 0; line-height: 1.55;
     }
     .evidence-block {
-      background: #e8f5e9;
-      color: #2e7d32;
-      border: 1px solid #c8e6c9;
-      padding: 12px;
-      border-radius: 6px;
-      font-size: 13.5px;
-      font-weight: 500;
+      display: flex; align-items: center; gap: 10px;
+      background: #e4f3e9; color: #2f7d46; border: 1px solid #c5e6d0;
+      padding: 12px 14px; border-radius: var(--radius-sm);
+      font-size: 13.5px; font-weight: 500;
     }
-    .btn {
-      padding: 10px 18px;
-      border-radius: 8px;
-      font-size: 14px;
-      font-weight: 700;
-      cursor: pointer;
-      border: none;
-      font-family: inherit;
-    }
-    .btn-sm {
-      padding: 6px 12px;
-      font-size: 12.5px;
-    }
-    .btn-primary {
-      background: #CE5200;
-      color: #fff;
-    }
-    .btn-primary:hover:not(:disabled) {
-      background: #562200;
-    }
-    .btn-secondary {
-      background: #ffffff;
-      border: 1px solid #ece4dc;
-      color: #211611;
-    }
-    .btn-secondary:hover {
-      background: #fbe9de;
-      color: #CE5200;
-    }
-    .modal-overlay {
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(42, 20, 8, 0.4);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 100;
-    }
-    .modal-card {
-      background: #ffffff;
-      border-radius: 14px;
-      width: 100%;
-      max-width: 500px;
-      padding: 32px;
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
-      max-height: 90vh;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-    }
-    .modal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid #ece4dc;
-      padding-bottom: 12px;
-    }
-    .modal-header h3 {
-      font-family: 'Manrope', sans-serif;
-      margin: 0;
-      font-size: 18px;
-      font-weight: 800;
-      color: #211611;
-    }
-    .close-modal {
-      background: none;
-      border: none;
-      font-size: 24px;
-      cursor: pointer;
-      color: #7a6a5e;
-    }
-    .field {
-      text-align: left;
-      margin-bottom: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-    .field label {
-      font-size: 13px;
-      font-weight: 700;
-      color: #211611;
-    }
-    .field input, .field select {
-      padding: 10px 12px;
-      border: 1px solid #ece4dc;
-      border-radius: 6px;
-      font-size: 14px;
-      outline: none;
-      background: #ffffff;
-    }
-    .field input:focus, .field select:focus {
-      border-color: #CE5200;
-    }
-    .form-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-    }
-    .modal-footer {
-      display: flex;
-      justify-content: flex-end;
-      gap: 12px;
-      border-top: 1px solid #ece4dc;
-      padding-top: 16px;
-    }
-    .alert {
-      padding: 10px 14px;
-      border-radius: 8px;
-      margin-bottom: 20px;
-      font-size: 13.5px;
-    }
-    .alert-error {
-      background: #fbeceb;
-      color: #b3261e;
-      border: 1px solid #f5c2c0;
-    }
-    .alert-success {
-      background: #e8f5e9;
-      color: #2e7d32;
-      border: 1px solid #c8e6c9;
-    }
-    .empty-state {
-      text-align: center;
-      color: #7a6a5e;
-      font-style: italic;
-      padding: 24px !important;
-    }
-    .details-pane {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      text-align: left;
-    }
-    .detail-item .label {
-      font-weight: 700;
-      color: #7a6a5e;
-      width: 140px;
-      display: inline-block;
-    }
-    .role-pill {
-      background: #fbe9de;
-      color: #CE5200;
-      padding: 2px 6px;
-      border-radius: 4px;
-      font-size: 12px;
-    }
+    .evidence-block svg { flex-shrink: 0; }
+
+    .hash-cell { font-family: monospace; font-size: 11.5px; max-width: 230px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-dim); }
+
+    /* Alerts */
+    .alert { padding: 11px 15px; border-radius: var(--radius-sm); margin-bottom: 18px; font-size: 13.5px; }
+    .alert-error { background: var(--danger-light); color: var(--danger); border: 1px solid #f3c9c6; }
+    .alert-success { background: #e4f3e9; color: #2f7d46; border: 1px solid #c5e6d0; }
+
+    /* Modal extras */
+    .modal-sub { color: var(--text-dim); font-size: 14px; margin: 6px 0 24px; }
+    .modal-footer { gap: 12px; }
+
+    /* Nested tables inside tab panels */
+    .subtab-content table thead th { padding: 10px 14px; }
+    .subtab-content table tbody td { padding: 12px 14px; }
   `]
 })
 export class DeviationsComponent implements OnInit {
@@ -960,7 +719,7 @@ export class DeviationsComponent implements OnInit {
     this.apiService.updateDeviation(devId, { ...this.selectedDeviation(), status: newStatus }).subscribe({
       next: () => {
         this.showSuccess(`Deviation state transitioned to: ${newStatus}`);
-        
+
         // Reload details
         const updatedDev = { ...this.selectedDeviation(), status: newStatus };
         this.selectedDeviation.set(updatedDev);
@@ -1088,5 +847,9 @@ export class DeviationsComponent implements OnInit {
   clearMessages() {
     this.errorMsg.set(null);
     this.successMsg.set(null);
+  }
+
+  confirmDiscard(): boolean {
+    return window.confirm('Discard unsaved changes?');
   }
 }

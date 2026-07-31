@@ -4,7 +4,7 @@ spring:
   application:
     name: deviationcapa-service
   datasource:
-    url: jdbc:mysql://localhost:3306/pharmatrack_deviationcapa?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=Asia/Kolkata
+    url: jdbc:mysql://localhost:3306/pharmatrack_deviationcapa?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Kolkata
     username: root
     password: root
     driver-class-name: com.mysql.cj.jdbc.Driver

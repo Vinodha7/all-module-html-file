@@ -205,7 +205,11 @@ public class UserServiceImpl implements UserService {
         boolean valid =
                 (current == UserStatus.Active &&
                         newStatus == UserStatus.Inactive) ||
+                (current == UserStatus.Active &&
+                        newStatus == UserStatus.Deactivated) ||
                 (current == UserStatus.Inactive &&
+                        newStatus == UserStatus.Active) ||
+                (current == UserStatus.Deactivated &&
                         newStatus == UserStatus.Active) ||
                 (current == UserStatus.Locked &&
                         newStatus == UserStatus.Active);
@@ -246,12 +250,12 @@ public class UserServiceImpl implements UserService {
                     return new ResourceNotFoundException("User not found");
                 });
 
-        if (user.getStatus() == UserStatus.Inactive) {
-            logger.warn("User ID: {} is already inactive", userId);
-            throw new IllegalArgumentException("User is already inactive");
+        if (user.getStatus() == UserStatus.Deactivated) {
+            logger.warn("User ID: {} is already deactivated", userId);
+            throw new IllegalArgumentException("User is already deactivated");
         }
 
-        user.setStatus(UserStatus.Inactive);
+        user.setStatus(UserStatus.Deactivated);
         userRepository.save(user);
 
         AuditLog log = new AuditLog();

@@ -16,6 +16,8 @@ export const routes: Routes = [
       { path: 'dashboard', loadComponent: () => import('./components/dashboard/dashboard.component').then(m => m.DashboardComponent) },
       { path: 'users', loadComponent: () => import('./components/admin/users/users.component').then(m => m.UsersComponent), data: { module: 'Users' } },
       { path: 'signatures', loadComponent: () => import('./components/admin/signatures/signatures.component').then(m => m.SignaturesComponent), data: { module: 'Electronic Signatures' } },
+      { path: 'products', loadComponent: () => import('./components/admin/products/products.component').then(m => m.ProductsComponent), data: { module: 'Products' } },
+      { path: 'sites', loadComponent: () => import('./components/admin/sites/sites.component').then(m => m.SitesComponent), data: { module: 'Sites' } },
       { path: 'audit', loadComponent: () => import('./components/audit/audit.component').then(m => m.AuditComponent), data: { module: 'Audit' } },
       { path: 'trials', loadComponent: () => import('./components/trials/trials.component').then(m => m.TrialsComponent), data: { module: 'Clinical Trials' } },
       { path: 'subjects', loadComponent: () => import('./components/subjects/subjects.component').then(m => m.SubjectsComponent), data: { module: 'Subjects' } },

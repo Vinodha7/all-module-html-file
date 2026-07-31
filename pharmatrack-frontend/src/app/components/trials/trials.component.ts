@@ -9,98 +9,161 @@ import { AuthService } from '../../services/auth.service';
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="trials-container">
-      <!-- Master View: Trials List -->
-      <div class="master-panel" *ngIf="!selectedTrial()">
-        <div class="panel-header">
+    <div class="content">
+      <!-- ================= MASTER VIEW: TRIALS LIST ================= -->
+      <div *ngIf="!selectedTrial()">
+        <div class="page-head">
           <div>
-            <h2>Clinical Trials Protocol Registry</h2>
-            <p>Establish and monitor clinical study protocols across site networks.</p>
+            <h1 class="page-title">Clinical Trials</h1>
+            <div class="page-sub">Protocols, sites and phase milestones across trials</div>
           </div>
-          <div>
-            <button class="btn btn-primary" (click)="openCreateTrialModal()">+Create Trial</button>
+          <button class="btn btn-primary btn-create" (click)="openCreateTrialModal()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+            Create Trial
+          </button>
+        </div>
+
+        <!-- Filter row -->
+        <div class="filter-row">
+          <div class="input-search">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            <input type="text" placeholder="Search trial code or indication">
+          </div>
+          <div class="filter-select">
+            <svg class="funnel-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+            <select aria-label="Filter by Status">
+              <option value="">All</option>
+              <option value="Draft">Draft</option>
+              <option value="Active">Active</option>
+              <option value="Suspended">Suspended</option>
+              <option value="Completed">Completed</option>
+              <option value="Terminated">Terminated</option>
+            </select>
+            <svg class="caret-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
           </div>
         </div>
 
         <!-- Table -->
-        <div class="table-container">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Trial Code</th>
-                <th>Product</th>
-                <th>Indication</th>
-                <th>Phase</th>
-                <th>Planned Subjects</th>
-                <th>Start Date</th>
-                <th>Status</th>
-                <th style="width: 100px;">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let trial of paginatedTrials()">
-                <td style="font-weight: 700; color: #CE5200;">{{ trial.trialCode }}</td>
-                <td>{{ getProductName(trial.productId) }}</td>
-                <td>{{ trial.indication }}</td>
-                <td><span class="phase-pill">{{ trial.phase }}</span></td>
-                <td>{{ trial.plannedSubjects }}</td>
-                <td>{{ trial.startDate }}</td>
-                <td>
-                  <span class="status-indicator" 
-                    [class.status-draft]="trial.status === 'Draft'"
-                    [class.status-active]="trial.status === 'Active' || trial.status === 'Approved'"
-                    [class.status-suspended]="trial.status === 'Suspended'"
-                    [class.status-completed]="trial.status === 'Completed'"
-                    [class.status-terminated]="trial.status === 'Terminated'">
-                    {{ trial.status }}
-                  </span>
-                </td>
-                <td>
-                  <button class="btn btn-secondary btn-sm" (click)="viewTrialDetails(trial)">View</button>
-                </td>
-              </tr>
-              <tr *ngIf="trials().length === 0">
-                <td colspan="8" class="empty-state">No clinical trials registered.</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        <div class="table-card">
+          <div class="table-card-head">
+            <h3>All Trials <span class="count">· {{ trials().length }} total</span></h3>
+          </div>
+          <div class="table-scroll">
+            <table class="table-fixed">
+              <thead>
+                <tr>
+                  <th style="width:15%;">Trial Code</th>
+                  <th style="width:16%;">Product</th>
+                  <th style="width:17%;">Indication</th>
+                  <th style="width:11%;">Phase</th>
+                  <th style="width:12%;">Planned Subjects</th>
+                  <th style="width:13%;">Start Date</th>
+                  <th style="width:10%;">Status</th>
+                  <th style="width:80px;">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let trial of paginatedTrials()">
+                  <td>
+                    <div class="name-cell" style="color:var(--accent-dark);">{{ trial.trialCode }}</div>
+                  </td>
+                  <td>{{ getProductName(trial.productId) }}</td>
+                  <td>{{ trial.indication }}</td>
+                  <td><span class="phase-pill">{{ trial.phase }}</span></td>
+                  <td class="mono">{{ trial.plannedSubjects }}</td>
+                  <td>{{ trial.startDate }}</td>
+                  <td>
+                    <span class="badge-status"
+                      [class.badge-draft]="trial.status === 'Draft'"
+                      [class.badge-active]="trial.status === 'Active' || trial.status === 'Approved'"
+                      [class.badge-suspended]="trial.status === 'Suspended'"
+                      [class.badge-completed]="trial.status === 'Completed'"
+                      [class.badge-terminated]="trial.status === 'Terminated'">
+                      {{ trial.status }}
+                    </span>
+                  </td>
+                  <td>
+                    <div class="dropdown">
+                      <button type="button" class="icon-menu-btn" aria-label="Row actions">
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg>
+                      </button>
+                      <div class="dropdown-menu dropdown-menu-right">
+                        <button type="button" class="dropdown-item" (click)="viewTrialDetails(trial)">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/><circle cx="12" cy="12" r="3"/></svg>
+                          View
+                        </button>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+                <tr *ngIf="trials().length === 0">
+                  <td colspan="8" class="empty-state">No clinical trials registered.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
 
-        <!-- Pagination -->
-        <div class="pagination" *ngIf="trials().length > 0">
-          <button [disabled]="page() === 1" (click)="page.set(page() - 1)">Previous</button>
-          <span>Page {{ page() }} of {{ totalPages() }}</span>
-          <button [disabled]="page() === totalPages()" (click)="page.set(page() + 1)">Next</button>
+          <!-- Pagination -->
+          <div class="table-footer" *ngIf="trials().length > 0">
+            <div>Page {{ page() }} of {{ totalPages() }} · {{ trials().length }} records</div>
+            <div class="pager">
+              <button [disabled]="page() === 1" (click)="page.set(page() - 1)" aria-label="Previous page">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+              </button>
+              <span style="padding:0 6px;">{{ page() }} / {{ totalPages() }}</span>
+              <button [disabled]="page() === totalPages()" (click)="page.set(page() + 1)" aria-label="Next page">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
-      <!-- Detail View: Side-by-Side Tabs on the same page -->
-      <div class="detail-panel" *ngIf="selectedTrial()">
-        <div class="detail-header">
-          <button class="btn btn-secondary" (click)="selectedTrial.set(null)">← Back to Registry</button>
-          
-          <div class="header-title">
-            <h3>Trial Protocol: {{ selectedTrial().trialCode }}</h3>
-            <span class="status-indicator" 
-              [class.status-draft]="selectedTrial().status === 'Draft'"
-              [class.status-active]="selectedTrial().status === 'Active' || selectedTrial().status === 'Approved'"
-              [class.status-suspended]="selectedTrial().status === 'Suspended'"
-              [class.status-completed]="selectedTrial().status === 'Completed'"
-              [class.status-terminated]="selectedTrial().status === 'Terminated'">
+      <!-- ================= DETAIL VIEW: SIDE-BY-SIDE TABS ================= -->
+      <div *ngIf="selectedTrial()">
+        <div class="breadcrumb">
+          <a (click)="selectedTrial.set(null)" style="cursor:pointer;">Trials</a> / <b>{{ selectedTrial().trialCode }}</b>
+        </div>
+
+        <div class="page-head">
+          <div>
+            <h1 class="page-title">Trial Protocol: {{ selectedTrial().trialCode }}</h1>
+            <div class="page-sub">{{ selectedTrial().indication }} · {{ selectedTrial().phase }}</div>
+          </div>
+          <button class="btn btn-secondary" (click)="selectedTrial.set(null)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+            Back to Registry
+          </button>
+        </div>
+
+        <!-- Status + workflow controls -->
+        <div class="trial-status-row">
+          <div class="detail-field">
+            <label>Status</label>
+            <span class="badge-status"
+              [class.badge-draft]="selectedTrial().status === 'Draft'"
+              [class.badge-active]="selectedTrial().status === 'Active' || selectedTrial().status === 'Approved'"
+              [class.badge-suspended]="selectedTrial().status === 'Suspended'"
+              [class.badge-completed]="selectedTrial().status === 'Completed'"
+              [class.badge-terminated]="selectedTrial().status === 'Terminated'">
               {{ selectedTrial().status }}
             </span>
           </div>
+          <div class="detail-field"><label>Planned Subjects</label><div class="value">{{ selectedTrial().plannedSubjects }}</div></div>
+          <div class="detail-field"><label>Start</label><div class="value">{{ selectedTrial().startDate }}</div></div>
+          <div class="detail-field"><label>End</label><div class="value">{{ selectedTrial().endDate }}</div></div>
+          <div class="detail-field"><label>PI ID</label><div class="value">{{ selectedTrial().principalInvestigatorId }}</div></div>
 
-          <!-- Workflow Controls -->
-          <div class="workflow-controls">
-            <!-- Draft Status: show Send only -->
-            <button class="btn btn-primary" *ngIf="selectedTrial().status === 'Draft'" (click)="openSignatureModal('Approved')">
-              Send for Approval
+          <div class="status-action-btns">
+            <!-- Draft: show Send only (Draft -> Active) -->
+            <button class="btn btn-primary btn-sm" *ngIf="selectedTrial().status === 'Draft'" (click)="openSignatureModal('Approved')">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+              Send
             </button>
 
-            <!-- Active Status: show Filter dropdown with Suspended, Completed, Terminated -->
+            <!-- Active/Approved: Filter dropdown with Suspended, Completed, Terminated -->
             <div class="workflow-dropdown-group" *ngIf="selectedTrial().status === 'Active' || selectedTrial().status === 'Approved'">
-              <label>Transition Status:</label>
+              <label>Transition</label>
               <select (change)="onStatusChangeSelect($event)">
                 <option value="">-- Choose Status --</option>
                 <option value="Suspended">Suspended</option>
@@ -108,41 +171,43 @@ import { AuthService } from '../../services/auth.service';
                 <option value="Terminated">Terminated</option>
               </select>
             </div>
+            <!-- Completed / Terminated: no Send, no Filter -->
           </div>
         </div>
 
-        <!-- Inline Tabs -->
+        <!-- Inline tab bar (switches on the same page, no navigation) -->
         <div class="detail-tabs">
-          <button [class.active]="detailTab() === 'protocol'" (click)="detailTab.set('protocol')">Study Protocol</button>
-          <button [class.active]="detailTab() === 'sites'" (click)="detailTab.set('sites')">Mapped Investigation Sites</button>
+          <button [class.active]="detailTab() === 'protocol'" (click)="detailTab.set('protocol')">Protocol</button>
+          <button [class.active]="detailTab() === 'sites'" (click)="detailTab.set('sites')">Site</button>
           <button [class.active]="detailTab() === 'history'" (click)="detailTab.set('history')">Workflow Log</button>
         </div>
 
-        <!-- Tab Contents (No navigation away) -->
         <div class="tab-card">
           <div class="alert alert-error" *ngIf="errorMsg()">{{ errorMsg() }}</div>
           <div class="alert alert-success" *ngIf="successMsg()">{{ successMsg() }}</div>
 
-          <!-- Protocol Details Tab -->
-          <div *ngIf="detailTab() === 'protocol'" class="grid-details">
-            <div class="detail-item"><span class="label">Product under Test:</span> {{ getProductName(selectedTrial().productId) }}</div>
-            <div class="detail-item"><span class="label">Primary Indication:</span> {{ selectedTrial().indication }}</div>
-            <div class="detail-item"><span class="label">Phase:</span> {{ selectedTrial().phase }}</div>
-            <div class="detail-item"><span class="label">Planned Sample Size:</span> {{ selectedTrial().plannedSubjects }} subjects</div>
-            <div class="detail-item"><span class="label">Proposed Start Date:</span> {{ selectedTrial().startDate }}</div>
-            <div class="detail-item"><span class="label">Proposed End Date:</span> {{ selectedTrial().endDate }}</div>
-            <div class="detail-item"><span class="label">Principal Investigator ID:</span> User ID {{ selectedTrial().principalInvestigatorId }}</div>
+          <!-- PROTOCOL TAB (default) -->
+          <div class="detail-grid" *ngIf="detailTab() === 'protocol'">
+            <div class="detail-field"><label>Product under Test</label><div class="value">{{ getProductName(selectedTrial().productId) }}</div></div>
+            <div class="detail-field"><label>Primary Indication</label><div class="value">{{ selectedTrial().indication }}</div></div>
+            <div class="detail-field"><label>Phase</label><div class="value">{{ selectedTrial().phase }}</div></div>
+            <div class="detail-field"><label>Planned Sample Size</label><div class="value">{{ selectedTrial().plannedSubjects }} subjects</div></div>
+            <div class="detail-field"><label>Proposed Start Date</label><div class="value">{{ selectedTrial().startDate }}</div></div>
+            <div class="detail-field"><label>Proposed End Date</label><div class="value">{{ selectedTrial().endDate }}</div></div>
+            <div class="detail-field"><label>Principal Investigator ID</label><div class="value">User ID {{ selectedTrial().principalInvestigatorId }}</div></div>
           </div>
 
-          <!-- Mapped Sites Tab -->
+          <!-- SITE TAB -->
           <div *ngIf="detailTab() === 'sites'">
-            <div class="tab-action-bar">
-              <h4>Associated Investigation Sites</h4>
-              <button class="btn btn-secondary btn-sm" (click)="openAddSiteModal()">+Map Site</button>
+            <div class="section-head">
+              <h3>Associated Investigation Sites</h3>
+              <button class="btn btn-primary btn-sm" (click)="openAddSiteModal()">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+                Map Site
+              </button>
             </div>
-            
-            <div class="table-container" style="margin-top: 12px;">
-              <table class="data-table">
+            <div class="section-box">
+              <table class="mini-table">
                 <thead>
                   <tr>
                     <th>Site Name</th>
@@ -154,12 +219,12 @@ import { AuthService } from '../../services/auth.service';
                 </thead>
                 <tbody>
                   <tr *ngFor="let ts of trialSites()">
-                    <td style="font-weight: 600;">{{ getSiteName(ts.siteId) }}</td>
+                    <td style="font-weight:700;">{{ getSiteName(ts.siteId) }}</td>
                     <td>{{ getSiteCountry(ts.siteId) }}</td>
                     <td>{{ ts.plannedSubjects }}</td>
                     <td>Investigator ID: {{ ts.principalInvestigatorId }}</td>
                     <td>
-                      <span class="status-indicator" [class.status-active]="ts.status === 'ACTIVE'" [class.status-inactive]="ts.status !== 'ACTIVE'">
+                      <span class="badge-status" [class.badge-active]="ts.status === 'ACTIVE'" [class.badge-progress]="ts.status !== 'ACTIVE'">
                         {{ ts.status }}
                       </span>
                     </td>
@@ -172,11 +237,13 @@ import { AuthService } from '../../services/auth.service';
             </div>
           </div>
 
-          <!-- Workflow History Tab -->
+          <!-- WORKFLOW LOG TAB -->
           <div *ngIf="detailTab() === 'history'">
-            <h4>Electronic Signature Verification Logs</h4>
-            <div class="table-container" style="margin-top: 12px;">
-              <table class="data-table">
+            <div class="section-head">
+              <h3>Electronic Signature Verification Logs</h3>
+            </div>
+            <div class="section-box">
+              <table class="mini-table">
                 <thead>
                   <tr>
                     <th>Signer</th>
@@ -192,9 +259,7 @@ import { AuthService } from '../../services/auth.service';
                     <td><span class="role-pill">{{ s.meaning }}</span></td>
                     <td>v{{ s.entityVersion }}</td>
                     <td>{{ s.signedAt | date:'medium' }}</td>
-                    <td style="font-family: monospace; font-size: 11px; max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" [title]="s.signatureHash">
-                      {{ s.signatureHash }}
-                    </td>
+                    <td class="hash-cell" [title]="s.signatureHash">{{ s.signatureHash }}</td>
                   </tr>
                   <tr *ngIf="signatureHistory().length === 0">
                     <td colspan="5" class="empty-state">No electronic signatures applied to this record yet.</td>
@@ -206,30 +271,34 @@ import { AuthService } from '../../services/auth.service';
         </div>
       </div>
 
-      <!-- ── MODALS ── -->
+      <!-- ══════════════ MODALS ══════════════ -->
 
       <!-- 1. CREATE TRIAL MODAL -->
       <div class="modal-overlay" *ngIf="showCreateTrialModal()">
-        <div class="modal-card">
-          <div class="modal-header">
-            <h3>+Create Clinical Study Protocol</h3>
-            <button class="close-modal" (click)="showCreateTrialModal.set(false)">×</button>
+        <div class="modal">
+          <button type="button" class="modal-close-x" (click)="closeWithConfirm(showCreateTrialModal)" aria-label="Close">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+          <div class="modal-head-row">
+            <div>
+              <h2>Create Trial</h2>
+              <div class="page-sub" style="margin-top:0;">Define trial phase, indication and planned enrolment</div>
+            </div>
           </div>
           <form (ngSubmit)="handleCreateTrial()">
-            <!-- Auto-generated Trial Code displays info -->
-            <div class="field">
-              <label>Trial Code (Auto-Generated)</label>
-              <input type="text" name="trialCode" [value]="createTrialForm.trialCode" disabled style="background: #f7f5f2; font-weight: 700; color: #562200;">
-            </div>
-            <div class="form-row">
+            <div class="form-grid">
+              <div class="field full">
+                <label>Trial Code (Auto-Generated)</label>
+                <input type="text" name="trialCode" [value]="createTrialForm.trialCode" disabled>
+              </div>
               <div class="field">
-                <label>Target Product</label>
+                <label>Target Product<span class="req">*</span></label>
                 <select name="productId" [(ngModel)]="createTrialForm.productId" required>
                   <option *ngFor="let p of products()" [value]="p.productId">{{ p.productName }}</option>
                 </select>
               </div>
               <div class="field">
-                <label>Study Phase</label>
+                <label>Study Phase<span class="req">*</span></label>
                 <select name="phase" [(ngModel)]="createTrialForm.phase" required>
                   <option value="PHASE_I">Phase I</option>
                   <option value="PHASE_II">Phase II</option>
@@ -237,33 +306,28 @@ import { AuthService } from '../../services/auth.service';
                   <option value="PHASE_IV">Phase IV</option>
                 </select>
               </div>
-            </div>
-            <div class="field">
-              <label>Indication / Condition</label>
-              <input type="text" name="indication" [(ngModel)]="createTrialForm.indication" placeholder="e.g. Type II Diabetes Mellitus" required>
-            </div>
-            <div class="form-row">
+              <div class="field full">
+                <label>Indication / Condition<span class="req">*</span></label>
+                <input type="text" name="indication" [(ngModel)]="createTrialForm.indication" placeholder="e.g. Type II Diabetes Mellitus" required>
+              </div>
               <div class="field">
-                <label>Planned Subjects Count</label>
+                <label>Planned Subjects Count<span class="req">*</span></label>
                 <input type="number" name="planned" [(ngModel)]="createTrialForm.plannedSubjects" required>
               </div>
               <div class="field">
-                <label>Principal Investigator ID</label>
+                <label>Principal Investigator ID<span class="req">*</span></label>
                 <input type="number" name="piId" [(ngModel)]="createTrialForm.principalInvestigatorId" placeholder="Investigator Staff ID" required>
               </div>
-            </div>
-            <div class="form-row">
               <div class="field">
-                <label>Start Date</label>
+                <label>Start Date<span class="req">*</span></label>
                 <input type="date" name="startDate" [(ngModel)]="createTrialForm.startDate" required>
               </div>
               <div class="field">
-                <label>End Date</label>
+                <label>End Date<span class="req">*</span></label>
                 <input type="date" name="endDate" [(ngModel)]="createTrialForm.endDate" required>
               </div>
             </div>
             <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" (click)="showCreateTrialModal.set(false)">Cancel</button>
               <button type="submit" class="btn btn-primary">Create Protocol</button>
             </div>
           </form>
@@ -272,30 +336,34 @@ import { AuthService } from '../../services/auth.service';
 
       <!-- 2. MAP SITE MODAL -->
       <div class="modal-overlay" *ngIf="showAddSiteModal()">
-        <div class="modal-card">
-          <div class="modal-header">
-            <h3>Map Site to Study Protocol</h3>
-            <button class="close-modal" (click)="showAddSiteModal.set(false)">×</button>
+        <div class="modal" style="max-width:620px;">
+          <button type="button" class="modal-close-x" (click)="closeWithConfirm(showAddSiteModal)" aria-label="Close">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+          <div class="modal-head-row">
+            <div>
+              <h2>Map Site to Study Protocol</h2>
+              <div class="page-sub" style="margin-top:0;">Associate an investigation site and its enrolment plan</div>
+            </div>
           </div>
           <form (ngSubmit)="handleMapSite()">
-            <div class="field">
-              <label>Select Site Directory</label>
-              <select name="siteId" [(ngModel)]="addSiteForm.siteId" required>
-                <option *ngFor="let s of sites()" [value]="s.siteId">{{ s.siteName }} ({{ s.country }})</option>
-              </select>
-            </div>
-            <div class="form-row">
+            <div class="form-grid">
+              <div class="field full">
+                <label>Select Site Directory<span class="req">*</span></label>
+                <select name="siteId" [(ngModel)]="addSiteForm.siteId" required>
+                  <option *ngFor="let s of sites()" [value]="s.siteId">{{ s.siteName }} ({{ s.country }})</option>
+                </select>
+              </div>
               <div class="field">
-                <label>Planned Subject Cohort</label>
+                <label>Planned Subject Cohort<span class="req">*</span></label>
                 <input type="number" name="cohort" [(ngModel)]="addSiteForm.plannedSubjects" required>
               </div>
               <div class="field">
-                <label>Principal Investigator ID</label>
+                <label>Principal Investigator ID<span class="req">*</span></label>
                 <input type="number" name="sitePi" [(ngModel)]="addSiteForm.principalInvestigatorId" placeholder="PI User ID" required>
               </div>
             </div>
             <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" (click)="showAddSiteModal.set(false)">Cancel</button>
               <button type="submit" class="btn btn-primary">Associate Site</button>
             </div>
           </form>
@@ -304,16 +372,21 @@ import { AuthService } from '../../services/auth.service';
 
       <!-- 3. ELECTRONIC SIGNATURE DIALOG -->
       <div class="modal-overlay" *ngIf="showSignatureModal()">
-        <div class="modal-card" style="max-width: 420px;">
-          <div class="modal-header">
-            <h3>Electronic Signature Verification</h3>
-            <button class="close-modal" (click)="showSignatureModal.set(false)">×</button>
+        <div class="modal" style="max-width:460px;">
+          <button type="button" class="modal-close-x" (click)="closeWithConfirm(showSignatureModal)" aria-label="Close">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+          <div class="modal-head-row">
+            <div>
+              <h2>Electronic Signature Verification</h2>
+              <div class="page-sub" style="margin-top:0;">Apply a legally binding electronic signature</div>
+            </div>
           </div>
-          <div class="details-pane" style="font-size: 13.5px; margin-bottom: 8px;">
-            <p>You are applying a legally binding electronic signature to transition this study record.</p>
-            <div class="detail-item"><span class="label">Action:</span> Transition to <strong>{{ targetStatus() }}</strong></div>
-            <div class="detail-item"><span class="label">Reasoning:</span> APPROVED</div>
-            <div class="detail-item"><span class="label">Meaning:</span> APPROVED</div>
+          <div class="sig-list">
+            <p style="margin:0 0 6px;font-size:13.5px;color:var(--text-dim);line-height:1.55;">You are applying a legally binding electronic signature to transition this study record.</p>
+            <div class="row"><span class="label">Action</span><span>Transition to <strong>{{ targetStatus() }}</strong></span></div>
+            <div class="row"><span class="label">Reasoning</span><span>APPROVED</span></div>
+            <div class="row"><span class="label">Meaning</span><span>APPROVED</span></div>
           </div>
           <form (ngSubmit)="executeSignatureTransition()">
             <div class="field">
@@ -321,7 +394,6 @@ import { AuthService } from '../../services/auth.service';
               <input type="password" name="sigPwd" [(ngModel)]="signaturePassword" placeholder="Enter your credentials password" required>
             </div>
             <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" (click)="showSignatureModal.set(false)">Cancel</button>
               <button type="submit" class="btn btn-primary" [disabled]="signing()">
                 {{ signing() ? 'Signing...' : 'Verify & Commit' }}
               </button>
@@ -332,361 +404,71 @@ import { AuthService } from '../../services/auth.service';
     </div>
   `,
   styles: [`
-    .trials-container {
-      background: #ffffff;
-      border: 1px solid #ece4dc;
-      border-radius: 14px;
-      padding: 32px;
-    }
-    .panel-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 24px;
-    }
-    .panel-header h2 {
-      font-family: 'Manrope', sans-serif;
-      font-size: 24px;
-      font-weight: 800;
-      color: #211611;
-      margin: 0 0 6px;
-    }
-    .panel-header p {
-      color: #7a6a5e;
-      font-size: 14px;
-      margin: 0;
-    }
-    .table-container {
-      overflow-x: auto;
-      margin-bottom: 20px;
-      border: 1px solid #ece4dc;
-      border-radius: 10px;
-    }
-    .data-table {
-      width: 100%;
-      border-collapse: collapse;
-      text-align: left;
-      font-size: 14px;
-    }
-    .data-table th {
-      background: #f7f5f2;
-      color: #211611;
-      font-weight: 700;
-      padding: 14px 16px;
-      border-bottom: 1px solid #ece4dc;
-    }
-    .data-table td {
-      padding: 14px 16px;
-      border-bottom: 1px solid #ece4dc;
-      color: #211611;
-      vertical-align: middle;
-    }
-    .phase-pill {
-      background: #e8f1fa;
-      color: #1d5f9e;
-      padding: 3px 8px;
-      border-radius: 4px;
-      font-weight: 600;
-      font-size: 12px;
-    }
-    .status-indicator {
-      display: inline-block;
-      padding: 3px 10px;
-      border-radius: 6px;
-      font-size: 12px;
-      font-weight: 700;
-      text-transform: uppercase;
-      border: 1px solid transparent;
-    }
-    .status-draft {
-      background: #f7f5f2;
-      color: #7a6a5e;
-      border-color: #ece4dc;
-    }
-    .status-active {
-      background: #e8f5e9;
-      color: #2e7d32;
-      border-color: #c8e6c9;
-    }
-    .status-suspended {
-      background: #fff8e1;
-      color: #f57f17;
-      border-color: #ffe082;
-    }
-    .status-completed {
-      background: #e8f1fa;
-      color: #1d5f9e;
-      border-color: #bbdefb;
-    }
-    .status-terminated {
-      background: #fbeceb;
-      color: #b3261e;
-      border-color: #ffcdd2;
-    }
-    .pagination {
-      display: flex;
-      justify-content: flex-end;
-      align-items: center;
-      gap: 16px;
-      font-size: 13.5px;
-      color: #7a6a5e;
-    }
-    .pagination button {
-      background: #ffffff;
-      border: 1px solid #ece4dc;
-      padding: 6px 14px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: 600;
-      color: #211611;
-    }
-    .pagination button:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-    .detail-panel {
-      text-align: left;
-    }
-    .detail-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 20px;
-      margin-bottom: 24px;
-      border-bottom: 1px solid #ece4dc;
-      padding-bottom: 16px;
-    }
-    .header-title {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    .header-title h3 {
-      font-family: 'Manrope', sans-serif;
-      margin: 0;
-      font-size: 20px;
-      font-weight: 800;
-      color: #211611;
-    }
-    .workflow-controls {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-    }
-    .workflow-dropdown-group {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .workflow-dropdown-group label {
-      font-size: 13.5px;
-      font-weight: 700;
-      color: #211611;
-    }
-    .workflow-dropdown-group select {
-      padding: 8px 12px;
-      border: 1px solid #ece4dc;
-      border-radius: 6px;
-      outline: none;
-      font-size: 13.5px;
-    }
-    .detail-tabs {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 20px;
-    }
-    .detail-tabs button {
-      background: none;
-      border: none;
-      padding: 10px 18px;
-      font-size: 14px;
-      font-weight: 600;
-      color: #7a6a5e;
-      cursor: pointer;
-      border-radius: 6px;
-      transition: background 0.15s ease, color 0.15s ease;
-    }
-    .detail-tabs button:hover {
-      background: #fbe9de;
-      color: #CE5200;
-    }
-    .detail-tabs button.active {
-      background: #fbe9de;
-      color: #CE5200;
-      border: 1px solid #ece4dc;
-    }
-    .tab-card {
-      border: 1px solid #ece4dc;
-      border-radius: 12px;
-      padding: 24px;
-    }
-    .grid-details {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 20px;
-    }
-    .detail-item {
-      font-size: 14px;
-      color: #211611;
-    }
-    .detail-item .label {
-      font-weight: 700;
-      color: #7a6a5e;
-      display: inline-block;
-      width: 180px;
-    }
-    .tab-action-bar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .tab-action-bar h4 {
-      margin: 0;
-      font-family: 'Manrope', sans-serif;
-      font-size: 16px;
-      font-weight: 800;
-    }
-    .btn {
-      padding: 10px 18px;
-      border-radius: 8px;
-      font-size: 14px;
-      font-weight: 700;
-      cursor: pointer;
-      border: none;
-      font-family: inherit;
-    }
-    .btn-sm {
-      padding: 6px 12px;
-      font-size: 12.5px;
-    }
-    .btn-primary {
-      background: #CE5200;
-      color: #fff;
-    }
-    .btn-primary:hover:not(:disabled) {
-      background: #562200;
-    }
-    .btn-secondary {
-      background: #ffffff;
-      border: 1px solid #ece4dc;
-      color: #211611;
-    }
-    .btn-secondary:hover {
-      background: #fbe9de;
-      color: #CE5200;
-    }
-    .modal-overlay {
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(42, 20, 8, 0.4);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 100;
-    }
-    .modal-card {
-      background: #ffffff;
-      border-radius: 14px;
-      width: 100%;
-      max-width: 500px;
-      padding: 32px;
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
-      max-height: 90vh;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-    }
-    .modal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid #ece4dc;
-      padding-bottom: 12px;
-    }
-    .modal-header h3 {
-      font-family: 'Manrope', sans-serif;
-      margin: 0;
-      font-size: 18px;
-      font-weight: 800;
-      color: #211611;
-    }
-    .close-modal {
-      background: none;
-      border: none;
-      font-size: 24px;
-      cursor: pointer;
-      color: #7a6a5e;
-    }
-    .field {
-      text-align: left;
-      margin-bottom: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-    .field label {
-      font-size: 13px;
-      font-weight: 700;
-      color: #211611;
-    }
-    .field input, .field select {
-      padding: 10px 12px;
-      border: 1px solid #ece4dc;
-      border-radius: 6px;
-      font-size: 14px;
-      outline: none;
-      background: #ffffff;
-    }
-    .field input:focus, .field select:focus {
-      border-color: #CE5200;
-    }
-    .form-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-    }
-    .modal-footer {
-      display: flex;
-      justify-content: flex-end;
-      gap: 12px;
-      border-top: 1px solid #ece4dc;
-      padding-top: 16px;
-    }
-    .alert {
-      padding: 10px 14px;
-      border-radius: 8px;
-      margin-bottom: 20px;
-      font-size: 13.5px;
-    }
-    .alert-error {
-      background: #fbeceb;
-      color: #b3261e;
-      border: 1px solid #f5c2c0;
-    }
-    .alert-success {
-      background: #e8f5e9;
-      color: #2e7d32;
-      border: 1px solid #c8e6c9;
-    }
-    .empty-state {
-      text-align: center;
-      color: #7a6a5e;
-      font-style: italic;
-      padding: 24px !important;
-    }
-    .details-pane {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      text-align: left;
-    }
-    .detail-item .label {
-      font-weight: 700;
-      color: #7a6a5e;
-      width: 140px;
-      display: inline-block;
-    }
+    /* Status badge colours not provided by the global design system */
+    .badge-draft{background:#eef0ef;color:#3c463f;}
+    .badge-suspended{background:var(--warning-light);color:var(--warning);}
+    .badge-completed{background:var(--blue-light);color:var(--blue);}
+    .badge-terminated{background:var(--danger-light);color:var(--danger);}
+
+    /* Small inline pills */
+    .phase-pill{display:inline-block;background:var(--blue-light);color:var(--blue);padding:4px 11px;border-radius:20px;font-weight:600;font-size:12px;}
+    .role-pill{display:inline-block;background:var(--accent-light);color:var(--accent-dark);padding:4px 11px;border-radius:20px;font-weight:600;font-size:12px;}
+
+    /* Row-action dropdown: reveal on hover / keyboard focus (no extra state) */
+    .dropdown:hover .dropdown-menu,
+    .dropdown:focus-within .dropdown-menu{display:block;}
+
+    /* Detail view: trial status summary card */
+    .trial-status-row{display:flex;align-items:center;gap:28px;flex-wrap:wrap;margin:8px 0 6px;padding:20px 22px;background:#fbfaf8;border:1px solid var(--border);border-radius:var(--radius-md);}
+    .status-action-btns{display:flex;align-items:center;gap:10px;margin-left:auto;flex-wrap:wrap;}
+    .btn-sm{padding:8px 14px;font-size:13px;}
+
+    /* Workflow transition dropdown */
+    .workflow-dropdown-group{display:flex;align-items:center;gap:10px;}
+    .workflow-dropdown-group label{font-size:11.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-dim);}
+    .workflow-dropdown-group select{border:1px solid var(--border);border-radius:var(--radius-sm);padding:9px 12px;font-size:14px;background:#fff;color:var(--text);font-family:inherit;}
+
+    /* Inline tab bar (side-by-side tabs, switch on same page) */
+    .detail-tabs{display:flex;gap:4px;margin:28px 0 20px;border-bottom:1px solid var(--border);}
+    .detail-tabs button{background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-1px;padding:12px 18px;font-size:14px;font-weight:600;color:var(--text-dim);cursor:pointer;font-family:inherit;transition:color .15s ease,border-color .15s ease;}
+    .detail-tabs button:hover{color:var(--accent-dark);}
+    .detail-tabs button.active{color:var(--accent);border-bottom-color:var(--accent);}
+    .tab-card{padding-top:4px;}
+
+    /* Section headers inside tabs */
+    .section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+    .section-head h3{margin:0;font-size:16px;font-weight:800;}
+
+    /* Mini table used within detail tabs */
+    .section-box{border:1px solid var(--border);border-radius:var(--radius-md);overflow:hidden;}
+    .mini-table{width:100%;border-collapse:collapse;}
+    .mini-table th{text-align:left;padding:12px 18px;font-size:11px;font-weight:700;letter-spacing:.05em;color:var(--text-dim);text-transform:uppercase;background:#fbfaf8;border-bottom:1px solid var(--border);}
+    .mini-table td{padding:14px 18px;font-size:14.5px;border-bottom:1px solid var(--border);color:var(--text);vertical-align:middle;}
+    .mini-table tr:last-child td{border-bottom:none;}
+    .hash-cell{font-family:monospace;font-size:11px;max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+
+    /* Empty state row */
+    .empty-state{padding:34px 20px;text-align:center;color:var(--text-dim);font-size:14px;font-style:italic;}
+
+    /* Inline alerts */
+    .alert{padding:11px 16px;border-radius:var(--radius-md);margin-bottom:18px;font-size:13.5px;}
+    .alert-error{background:var(--danger-light);color:var(--danger);border:1px solid #f5c2c0;}
+    .alert-success{background:#e8f5e9;color:#2e7d32;border:1px solid #c8e6c9;}
+
+    /* Signature dialog detail list */
+    .sig-list{display:flex;flex-direction:column;gap:10px;margin:4px 0 20px;font-size:14px;}
+    .sig-list .row{display:flex;gap:10px;}
+    .sig-list .label{font-weight:700;color:var(--text-dim);min-width:90px;}
+
+    /* Modal head spacing tweak */
+    .modal .modal-head-row{margin-bottom:22px;}
+
+    /* Funnel status filter dropdown */
+    .filter-select{position:relative;display:inline-flex;align-items:center;min-width:200px;}
+    .filter-select .funnel-ico{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--text-dim);pointer-events:none;}
+    .filter-select .caret-ico{position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--text-dim);pointer-events:none;}
+    .filter-select select{appearance:none;-webkit-appearance:none;-moz-appearance:none;width:100%;border:1px solid var(--border);border-radius:var(--radius-sm);padding:11px 36px 11px 38px;font-size:14px;background:transparent;color:var(--text);font-family:inherit;cursor:pointer;}
+    .filter-select select:focus{outline:none;border-color:var(--accent);}
   `]
 })
 export class TrialsComponent implements OnInit {
@@ -921,7 +703,7 @@ export class TrialsComponent implements OnInit {
               this.signing.set(false);
               this.showSignatureModal.set(false);
               this.showSuccess(`Trial state successfully transitioned to: ${this.targetStatus()}`);
-              
+
               // Reload details
               const updatedTrial = { ...this.selectedTrial(), status: this.targetStatus() };
               this.selectedTrial.set(updatedTrial);
@@ -960,5 +742,12 @@ export class TrialsComponent implements OnInit {
   clearMessages() {
     this.errorMsg.set(null);
     this.successMsg.set(null);
+  }
+
+  // Close an input modal only after confirming discard of unsaved changes
+  closeWithConfirm(modalSignal: { set: (v: boolean) => void }) {
+    if (window.confirm('Discard unsaved changes?')) {
+      modalSignal.set(false);
+    }
   }
 }

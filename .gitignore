@@ -3,3 +3,10 @@ maven-tool/
 .idea/
 .gemini/
 *.log
+
+# Build output / dependencies (do not commit)
+**/node_modules/
+**/dist/
+**/.angular/
+**/target/
+backend/microservices/logs/

@@ -72,6 +72,6 @@ public class UserDetails {
     }
 
     public enum UserStatus {
-        Active, Inactive, Locked
+        Active, Inactive, Locked, Deactivated
     }
 }

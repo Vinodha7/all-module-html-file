@@ -13,336 +13,126 @@ import { Subscription, interval } from 'rxjs';
     <div class="app-shell">
       <!-- SIDEBAR -->
       <aside class="sidebar">
-        <div>
+        <div class="brand">
           <div class="brand-row">
-            <div class="brand-icon">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/>
-              </svg>
-            </div>
-            <div>
-              <div class="brand-name">PharmaTrack</div>
-              <div class="brand-sub">Compliance Platform</div>
-            </div>
+            <span class="brand-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l7 4v6c0 4.5-3 7.5-7 10-4-2.5-7-5.5-7-10V6l7-4z"/><path d="M9 12l2 2 4-4"/></svg>
+            </span>
+            <div class="brand-name">PharmaTrack</div>
           </div>
+          <div class="brand-sub">Drug Trial &amp; Supply Chain</div>
         </div>
 
         <nav class="nav">
-          <div class="nav-section">Main</div>
           <a class="nav-item" routerLink="/dashboard" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-            Dashboard
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+            <span>Dashboard</span>
           </a>
 
-          <!-- Research / Investigation -->
-          <div class="nav-section" *ngIf="showClinicalTrials() || showSubjects()">Trials & Subjects</div>
-          <a class="nav-item" *ngIf="showClinicalTrials()" routerLink="/trials" routerLinkActive="active">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
-            Clinical Trials
+          <!-- Operations -->
+          <div class="nav-section">Operations</div>
+          <a class="nav-item" routerLink="/trials" routerLinkActive="active">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M9 12h6M9 16h6"/></svg>
+            <span>Clinical Trials</span>
           </a>
-          <a class="nav-item" *ngIf="showSubjects()" routerLink="/subjects" routerLinkActive="active">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-            Subject Enrollment
+          <a class="nav-item" routerLink="/subjects" routerLinkActive="active">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="m16 11 2 2 4-4"/></svg>
+            <span>Subjects &amp; Visits</span>
           </a>
-
-          <!-- Quality / Manufacturing -->
-          <div class="nav-section" *ngIf="showBatches() || showDeviations()">Quality Operations</div>
-          <a class="nav-item" *ngIf="showBatches()" routerLink="/batches" routerLinkActive="active">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"/></svg>
-            Batch Manufacturing
+          <a class="nav-item" routerLink="/batches" routerLinkActive="active">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="M3.3 7 12 12l8.7-5M12 22V12"/></svg>
+            <span>Batch Manufacturing</span>
           </a>
-          <a class="nav-item" *ngIf="showDeviations()" routerLink="/deviations" routerLinkActive="active">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-            Deviations & CAPA
+          <a class="nav-item" routerLink="/supply-chain" routerLinkActive="active">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 3h13v13H1z"/><path d="M14 8h4l4 4v4h-8V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="17.5" cy="18.5" r="2.5"/></svg>
+            <span>Supply Chain</span>
           </a>
 
-          <!-- Supply Chain -->
-          <div class="nav-section" *ngIf="showSupplyChain()">Supply Chain</div>
-          <a class="nav-item" *ngIf="showSupplyChain()" routerLink="/supply-chain" routerLinkActive="active">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
-            Logistics & Cold Chain
+          <!-- Quality & Compliance -->
+          <div class="nav-section">Quality &amp; Compliance</div>
+          <a class="nav-item" routerLink="/deviations" routerLinkActive="active">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/><path d="M12 9v4M12 17h.01"/></svg>
+            <span>Deviations &amp; CAPA</span>
+          </a>
+          <a class="nav-item" routerLink="/regulatory" routerLinkActive="active">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>
+            <span>Regulatory Affairs</span>
           </a>
 
-          <!-- Regulatory Affairs -->
-          <div class="nav-section" *ngIf="showRegulatory()">Regulatory</div>
-          <a class="nav-item" *ngIf="showRegulatory()" routerLink="/regulatory" routerLinkActive="active">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-            Regulatory Affairs
-          </a>
-
-          <!-- Auditing -->
-          <div class="nav-section" *ngIf="showAudit()">Audit & Integrity</div>
-          <a class="nav-item" *ngIf="showAudit()" routerLink="/audit" routerLinkActive="active">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M12 6v6l4 2"/></svg>
-            Compliance & Ledger
+          <!-- Monitoring -->
+          <div class="nav-section">Monitoring</div>
+          <a class="nav-item" routerLink="/notifications" routerLinkActive="active">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+            <span>Notifications &amp; Alerts</span>
           </a>
 
           <!-- Administration -->
-          <div class="nav-section" *ngIf="showAdmin()">Administration</div>
-          <a class="nav-item" *ngIf="showAdmin()" routerLink="/users" routerLinkActive="active">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-            User Management
+          <div class="nav-section">Administration</div>
+          <a class="nav-item" routerLink="/users" routerLinkActive="active">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <span>Users</span>
           </a>
-          <a class="nav-item" *ngIf="showAdmin()" routerLink="/signatures" routerLinkActive="active">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-4"/></svg>
-            E-Signatures List
+          <a class="nav-item" routerLink="/products" routerLinkActive="active">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="M3.3 7 12 12l8.7-5M12 22V12"/></svg>
+            <span>Products</span>
+          </a>
+          <a class="nav-item" routerLink="/sites" routerLinkActive="active">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-6-5.686-6-10a6 6 0 0 1 12 0c0 4.314-6 10-6 10Z"/><circle cx="12" cy="11" r="2"/></svg>
+            <span>Sites</span>
+          </a>
+          <a class="nav-item" routerLink="/signatures" routerLinkActive="active">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17c2-4 4-4 6 0s4 4 6 0 4-4 6 0"/><path d="M3 21h18"/></svg>
+            <span>E-Signatures</span>
+          </a>
+          <a class="nav-item" routerLink="/audit" routerLinkActive="active">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            <span>Audit Trail</span>
           </a>
         </nav>
-
-        <div class="sidebar-footer">
-          <div class="user-info">
-            <div class="user-name-title">{{ userName() }}</div>
-            <div class="user-role-badge">{{ userRole() }}</div>
-          </div>
-          <button class="logout-btn" (click)="handleLogout()">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-            Sign Out
-          </button>
-        </div>
       </aside>
 
       <!-- MAIN PANEL -->
       <main class="main">
         <header class="topbar">
-          <div class="page-title">
-            PharmaTrack Portal
-          </div>
-          
-          <div class="topbar-actions">
+          <div class="pill">{{ userRole() }}</div>
+
+          <div class="topbar-right">
             <!-- Notifications Bell -->
-            <button class="bell-btn" routerLink="/notifications" aria-label="View notifications">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-              </svg>
+            <button class="icon-btn" routerLink="/notifications" aria-label="Notifications">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
               <span class="badge" *ngIf="unreadCount() > 0">{{ unreadCount() }}</span>
             </button>
-            
-            <div class="user-avatar">
-              {{ userInitials() }}
+
+            <div class="dropdown">
+              <div class="user-chip" (click)="toggleUserMenu($event)">
+                <div class="avatar">{{ userInitials() }}</div>
+                <div class="user-meta">
+                  <div class="user-name">{{ userName() }}</div>
+                  <div class="user-role">{{ userRole() }}</div>
+                </div>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+              </div>
+              <div class="dropdown-menu dropdown-menu-right" [class.open]="userMenuOpen()">
+                <button type="button" class="dropdown-item" (click)="handleLogout()">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                  Sign out
+                </button>
+              </div>
             </div>
           </div>
         </header>
 
         <!-- Dynamic Content Router Outlet -->
-        <div class="content-body">
+        <div class="content">
           <router-outlet></router-outlet>
         </div>
       </main>
     </div>
   `,
   styles: [`
-    .app-shell {
-      display: flex;
-      min-height: 100vh;
-      background: #f7f5f2;
-    }
-    .sidebar {
-      position: fixed;
-      top: 0; left: 0; bottom: 0;
-      width: 264px;
-      background: #2a1408; /* Theme match */
-      padding: 30px 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 24px;
-      overflow-y: auto;
-      z-index: 30;
-      scrollbar-width: none;
-    }
-    .sidebar::-webkit-scrollbar {
-      display: none;
-    }
-    .brand-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .brand-icon {
-      width: 32px; height: 32px;
-      border-radius: 9px;
-      background: #CE5200;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .brand-name {
-      font-family: 'Manrope', sans-serif;
-      color: #fff;
-      font-size: 20px;
-      font-weight: 800;
-      letter-spacing: -0.02em;
-    }
-    .brand-sub {
-      color: #a98a72;
-      font-size: 11.5px;
-    }
-    .nav {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      flex-grow: 1;
-    }
-    .nav-section {
-      color: #a98a72;
-      font-size: 10.5px;
-      font-weight: 700;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      margin: 18px 0 6px 12px;
-    }
-    .nav-section:first-of-type {
-      margin-top: 5px;
-    }
-    .nav-item {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 10px 14px;
-      border-radius: 8px;
-      color: #e8d3c4;
-      text-decoration: none;
-      font-size: 14px;
-      font-weight: 500;
-      transition: background 0.15s ease, color 0.15s ease;
-    }
-    .nav-item:hover {
-      background: rgba(255, 255, 255, 0.06);
-      color: #CE5200; /* Light Orange hover standard */
-    }
-    .nav-item.active {
-      background: #6b2f0f;
-      color: #fff;
-      font-weight: 600;
-    }
-    .sidebar-footer {
-      border-top: 1px solid rgba(255, 255, 255, 0.08);
-      padding-top: 18px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-    .user-info {
-      padding: 0 10px;
-    }
-    .user-name-title {
-      color: #ffffff;
-      font-size: 14.5px;
-      font-weight: 600;
-    }
-    .user-role-badge {
-      display: inline-block;
-      margin-top: 4px;
-      font-size: 11px;
-      color: #e8d3c4;
-      background: #6b2f0f;
-      padding: 2px 8px;
-      border-radius: 4px;
-      text-transform: uppercase;
-      font-weight: 600;
-    }
-    .logout-btn {
-      width: 100%;
-      padding: 10px;
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 8px;
-      color: #e8d3c4;
-      font-size: 13.5px;
-      font-weight: 600;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      font-family: inherit;
-      transition: background 0.2s ease, border-color 0.2s ease;
-    }
-    .logout-btn:hover {
-      background: rgba(179, 38, 30, 0.15);
-      border-color: #b3261e;
-      color: #fff;
-    }
-    .main {
-      margin-left: 264px;
-      flex-grow: 1;
-      display: flex;
-      flex-direction: column;
-      min-width: 0;
-      min-height: 100vh;
-    }
-    .topbar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      height: 70px;
-      background: #ffffff;
-      border-bottom: 1px solid #ece4dc;
-      padding: 0 32px;
-      position: sticky;
-      top: 0;
-      z-index: 20;
-    }
-    .page-title {
-      font-family: 'Manrope', sans-serif;
-      font-size: 18px;
-      font-weight: 700;
-      color: #211611;
-    }
-    .topbar-actions {
-      display: flex;
-      align-items: center;
-      gap: 20px;
-    }
-    .bell-btn {
-      background: none;
-      border: none;
-      color: #7a6a5e;
-      cursor: pointer;
-      position: relative;
-      padding: 4px;
-      border-radius: 50%;
-      transition: background 0.2s ease, color 0.2s ease;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .bell-btn:hover {
-      background: #fbe9de;
-      color: #CE5200;
-    }
-    .bell-btn .badge {
-      position: absolute;
-      top: -2px; right: -2px;
-      background: #b3261e;
-      color: #ffffff;
-      font-size: 10px;
-      font-weight: 700;
-      min-width: 16px;
-      height: 16px;
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 0 4px;
-      border: 2px solid #ffffff;
-    }
-    .user-avatar {
-      width: 38px; height: 38px;
-      border-radius: 50%;
-      background: #fbe9de;
-      color: #CE5200;
-      font-weight: 700;
-      font-size: 14px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border: 1px solid #ece4dc;
-    }
-    .content-body {
-      padding: 32px;
-      flex-grow: 1;
-      overflow-y: auto;
-    }
+    .app-shell { display: block; min-height: 100vh; }
+    /* Sidebar is position:fixed (out of flow); .main fills everything to the right of it. */
+    .main { flex: 1; width: auto; }
   `]
 })
 export class AppShellComponent implements OnInit, OnDestroy {
@@ -354,6 +144,7 @@ export class AppShellComponent implements OnInit, OnDestroy {
   userRole = signal<string>('Staff');
   userInitials = signal<string>('U');
   unreadCount = signal<number>(0);
+  userMenuOpen = signal<boolean>(false);
 
   private pollSubscription?: Subscription;
 
@@ -369,6 +160,11 @@ export class AppShellComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     this.pollSubscription?.unsubscribe();
+  }
+
+  toggleUserMenu(event: Event) {
+    event.stopPropagation();
+    this.userMenuOpen.update(v => !v);
   }
 
   updateUserContext() {
@@ -401,6 +197,7 @@ export class AppShellComponent implements OnInit, OnDestroy {
   }
 
   handleLogout() {
+    this.userMenuOpen.set(false);
     this.authService.logout().subscribe(() => {
       this.router.navigate(['/login']);
     });
@@ -415,4 +212,6 @@ export class AppShellComponent implements OnInit, OnDestroy {
   showRegulatory(): boolean { return this.authService.hasPermission('Regulatory Affairs'); }
   showAudit(): boolean { return this.authService.hasPermission('Audit'); }
   showAdmin(): boolean { return this.authService.hasPermission('Administration'); }
+  showProducts(): boolean { return this.authService.hasPermission('Products'); }
+  showSites(): boolean { return this.authService.hasPermission('Sites'); }
 }

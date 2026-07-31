@@ -67,6 +67,9 @@ public class AuthServiceImpl implements AuthService {
         if (user.getStatus() == UserStatus.Locked)
             throw new IllegalStateException("Account is locked");
 
+        if (user.getStatus() == UserStatus.Deactivated)
+            throw new IllegalStateException("Account is deactivated. Contact an administrator.");
+
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             user.setFailedAttempts(user.getFailedAttempts() + 1);
             user.setLastFailedAttempt(LocalDateTime.now());
@@ -76,9 +79,12 @@ public class AuthServiceImpl implements AuthService {
             throw new ResourceNotFoundException("Invalid email or password");
         }
 
-        // Reset failed attempts on successful login
+        // Reset failed attempts and re-activate a signed-out (Inactive) account on successful login
         user.setFailedAttempts(0);
         user.setLastFailedAttempt(null);
+        if (user.getStatus() == UserStatus.Inactive) {
+            user.setStatus(UserStatus.Active);
+        }
         userRepository.save(user);
 
         // Deactivate existing sessions â€” one session per user
@@ -165,6 +171,14 @@ public class AuthServiceImpl implements AuthService {
                 .orElseThrow(() -> new ResourceNotFoundException("Invalid token"));
         session.setIsActive(false);
         sessionRepository.save(session);
+
+        // Auto-mark the account Inactive on sign-out (distinct from admin-set Deactivated).
+        // Only flip an Active account so a Deactivated/Locked account is never overridden.
+        UserDetails user = session.getUser();
+        if (user.getStatus() == UserStatus.Active) {
+            user.setStatus(UserStatus.Inactive);
+            userRepository.save(user);
+        }
 
         // Audit log â€” Logout
         writeAuditLog(session.getUser(), AuditLog.AuditAction.Logout,

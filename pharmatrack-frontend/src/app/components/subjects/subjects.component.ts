@@ -9,21 +9,41 @@ import { AuthService } from '../../services/auth.service';
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="subjects-container">
-      <!-- Master View: Subjects list -->
-      <div class="master-panel" *ngIf="!selectedSubject()">
-        <div class="panel-header">
-          <div>
-            <h2>Clinical Trial Subjects Registry</h2>
-            <p>Enroll subjects and monitor patient visits and adverse events.</p>
-          </div>
-          <div>
-            <button class="btn btn-primary" (click)="openEnrollModal()">+Enroll Subject</button>
-          </div>
+    <!-- ============ LIST VIEW ============ -->
+    <div class="subjects-container" *ngIf="!selectedSubject()">
+      <div class="page-head">
+        <div>
+          <h1 class="page-title">Subject Enrolment</h1>
+          <div class="page-sub">Enroll subjects and monitor patient visits and adverse events.</div>
         </div>
+        <button class="btn btn-primary btn-create" (click)="openEnrollModal()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+          <span>Enroll Subject</span>
+        </button>
+      </div>
 
-        <div class="table-container">
-          <table class="data-table">
+      <div class="filter-row">
+        <div class="input-search">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          <input type="text" placeholder="Search subject code">
+        </div>
+        <div class="filter-select">
+          <svg class="funnel-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+          <select aria-label="Filter by Status">
+            <option value="">All</option>
+            <option value="Enrolled">Enrolled</option>
+            <option value="Reviewed">Reviewed</option>
+          </select>
+          <svg class="caret-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+      </div>
+
+      <div class="table-card">
+        <div class="table-card-head">
+          <h3>Subjects <span class="count">· {{ subjects().length }} total</span></h3>
+        </div>
+        <div class="table-scroll">
+          <table>
             <thead>
               <tr>
                 <th>Subject Code</th>
@@ -32,25 +52,35 @@ import { AuthService } from '../../services/auth.service';
                 <th>Gender</th>
                 <th>Enrollment Date</th>
                 <th>Status</th>
-                <th style="width: 100px;">Actions</th>
+                <th style="text-align:center;">Actions</th>
               </tr>
             </thead>
             <tbody>
               <tr *ngFor="let sub of paginatedSubjects()">
-                <td style="font-weight: 700; color: #CE5200;">{{ sub.subjectCode }}</td>
+                <td class="name-cell">{{ sub.subjectCode }}</td>
                 <td>{{ getTrialCode(sub.trialId) }}</td>
                 <td>{{ getSiteName(sub.siteId) }}</td>
                 <td>{{ sub.gender }}</td>
                 <td>{{ sub.enrolmentDate }}</td>
                 <td>
-                  <span class="status-indicator" 
-                    [class.status-enrolled]="sub.status === 'Enrolled'"
-                    [class.status-reviewed]="sub.status === 'Reviewed'">
+                  <span class="badge-status"
+                    [class.badge-progress]="sub.status === 'Enrolled'"
+                    [class.badge-approved]="sub.status === 'Reviewed'">
                     {{ sub.status }}
                   </span>
                 </td>
-                <td>
-                  <button class="btn btn-secondary btn-sm" (click)="viewSubjectDetails(sub)">View</button>
+                <td class="actions-cell" style="text-align:center;">
+                  <div class="dropdown row-actions">
+                    <button type="button" class="icon-menu-btn" aria-label="Row actions">
+                      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg>
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-right">
+                      <button type="button" class="dropdown-item" (click)="viewSubjectDetails(sub)">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/><circle cx="12" cy="12" r="3"/></svg>
+                        View
+                      </button>
+                    </div>
+                  </div>
                 </td>
               </tr>
               <tr *ngIf="subjects().length === 0">
@@ -59,724 +89,450 @@ import { AuthService } from '../../services/auth.service';
             </tbody>
           </table>
         </div>
-
-        <!-- Pagination -->
-        <div class="pagination" *ngIf="subjects().length > 0">
-          <button [disabled]="page() === 1" (click)="page.set(page() - 1)">Previous</button>
-          <span>Page {{ page() }} of {{ totalPages() }}</span>
-          <button [disabled]="page() === totalPages()" (click)="page.set(page() + 1)">Next</button>
-        </div>
-      </div>
-
-      <!-- Detail View: Inline tabs for Subject Details, Visits, Adverse Events -->
-      <div class="detail-panel" *ngIf="selectedSubject()">
-        <div class="detail-header">
-          <button class="btn btn-secondary" (click)="selectedSubject.set(null)">← Back to Subjects</button>
-          
-          <div class="header-title">
-            <h3>Subject: {{ selectedSubject().subjectCode }}</h3>
-            <span class="status-indicator" 
-              [class.status-enrolled]="selectedSubject().status === 'Enrolled'"
-              [class.status-reviewed]="selectedSubject().status === 'Reviewed'">
-              {{ selectedSubject().status }}
-            </span>
-          </div>
-
-          <!-- Workflow Controls -->
-          <div class="workflow-controls" *ngIf="selectedSubject().status === 'Enrolled'">
-            <button class="btn btn-primary" (click)="openSignatureModal('Reviewed')">
-              Sign & Review Subject
+        <div class="table-footer" *ngIf="subjects().length > 0">
+          <div>Page {{ page() }} of {{ totalPages() }}</div>
+          <div class="pager">
+            <button [disabled]="page() === 1" (click)="page.set(page() - 1)" aria-label="Previous page">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+            </button>
+            <button [disabled]="page() === totalPages()" (click)="page.set(page() + 1)" aria-label="Next page">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
             </button>
           </div>
         </div>
+      </div>
+    </div>
 
-        <!-- Tabs -->
-        <div class="detail-tabs">
-          <button [class.active]="detailTab() === 'details'" (click)="detailTab.set('details')">Subject Profile</button>
-          <button [class.active]="detailTab() === 'visits'" (click)="detailTab.set('visits')">Visits Log</button>
-          <button [class.active]="detailTab() === 'events'" (click)="detailTab.set('events')">Adverse Events (AE)</button>
-          <button [class.active]="detailTab() === 'signatures'" (click)="detailTab.set('signatures')">Workflow Signatures</button>
+    <!-- ============ DETAIL VIEW (tabbed) ============ -->
+    <div class="subjects-container" *ngIf="selectedSubject()">
+      <div class="breadcrumb">
+        <a href="javascript:void(0)" (click)="selectedSubject.set(null)">Subjects</a> / <b>{{ selectedSubject().subjectCode }}</b>
+      </div>
+
+      <div class="page-head">
+        <div>
+          <h1 class="page-title">{{ selectedSubject().subjectCode }}</h1>
+          <div class="page-sub">
+            <span class="badge-status"
+              [class.badge-progress]="selectedSubject().status === 'Enrolled'"
+              [class.badge-approved]="selectedSubject().status === 'Reviewed'">
+              {{ selectedSubject().status }}
+            </span>
+          </div>
         </div>
-
-        <!-- Tab Cards -->
-        <div class="tab-card">
-          <div class="alert alert-error" *ngIf="errorMsg()">{{ errorMsg() }}</div>
-          <div class="alert alert-success" *ngIf="successMsg()">{{ successMsg() }}</div>
-
-          <!-- 1. DETAILS TAB -->
-          <div *ngIf="detailTab() === 'details'" class="grid-details">
-            <div class="detail-item"><span class="label">Subject Code:</span> {{ selectedSubject().subjectCode }}</div>
-            <div class="detail-item"><span class="label">Date of Birth:</span> {{ selectedSubject().dateOfBirth }}</div>
-            <div class="detail-item"><span class="label">Gender:</span> {{ selectedSubject().gender }}</div>
-            <div class="detail-item"><span class="label">Consent Signed Date:</span> {{ selectedSubject().consentDate }}</div>
-            <div class="detail-item"><span class="label">Enrollment Date:</span> {{ selectedSubject().enrolmentDate }}</div>
-            <div class="detail-item"><span class="label">Trial Protocol:</span> {{ getTrialCode(selectedSubject().trialId) }}</div>
-            <div class="detail-item"><span class="label">Investigation Site:</span> {{ getSiteName(selectedSubject().siteId) }}</div>
-            <div class="detail-item"><span class="label">Verification Status:</span> {{ selectedSubject().status }}</div>
-          </div>
-
-          <!-- 2. VISITS TAB (Accessible only inside subject details) -->
-          <div *ngIf="detailTab() === 'visits'">
-            <div class="tab-action-bar">
-              <h4>Recorded Visit Entries</h4>
-              <button class="btn btn-secondary btn-sm" (click)="openAddVisitModal()">+Record Visit</button>
-            </div>
-
-            <div class="table-container" style="margin-top: 12px;">
-              <table class="data-table">
-                <thead>
-                  <tr>
-                    <th>Visit Code (ID)</th>
-                    <th>Visit Type</th>
-                    <th>Scheduled Date</th>
-                    <th>Actual Date</th>
-                    <th>Observations / Notes</th>
-                    <th>Sample Collected</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr *ngFor="let v of visits()">
-                    <td style="font-weight: 600;">{{ v.visitId }}</td>
-                    <td>{{ v.visitType }}</td>
-                    <td>{{ v.scheduledDate }}</td>
-                    <td>{{ v.actualDate }}</td>
-                    <td>{{ v.observations }}</td>
-                    <td>
-                      <span class="status-indicator" [class.status-active]="v.sampleCollected" [class.status-inactive]="!v.sampleCollected">
-                        {{ v.sampleCollected ? 'Yes' : 'No' }}
-                      </span>
-                    </td>
-                    <td><span class="role-pill">{{ v.status }}</span></td>
-                  </tr>
-                  <tr *ngIf="visits().length === 0">
-                    <td colspan="7" class="empty-state">No visits recorded for this subject.</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <!-- 3. ADVERSE EVENTS TAB (Accessible only inside subject details) -->
-          <div *ngIf="detailTab() === 'events'">
-            <div class="tab-action-bar">
-              <h4>Adverse Events Manifest</h4>
-              <button class="btn btn-secondary btn-sm" (click)="openAddEventModal()">+Record Event</button>
-            </div>
-
-            <div class="table-container" style="margin-top: 12px;">
-              <table class="data-table">
-                <thead>
-                  <tr>
-                    <th>AE Code (ID)</th>
-                    <th>Visit ID</th>
-                    <th>Description</th>
-                    <th>Severity</th>
-                    <th>Relatedness</th>
-                    <th>Onset Date</th>
-                    <th>Outcome Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr *ngFor="let ae of adverseEvents()">
-                    <td style="font-weight: 600; color: #b3261e;">{{ ae.aeId }}</td>
-                    <td>{{ ae.visitId }}</td>
-                    <td>{{ ae.description }}</td>
-                    <td>
-                      <span class="severity-pill" [class.sev-minor]="ae.severity === 'Minor'" [class.sev-major]="ae.severity === 'Major'" [class.sev-critical]="ae.severity === 'Critical'">
-                        {{ ae.severity }}
-                      </span>
-                    </td>
-                    <td>{{ ae.relatedness }}</td>
-                    <td>{{ ae.onsetDate }}</td>
-                    <td><span class="status-indicator status-active">{{ ae.status }}</span></td>
-                  </tr>
-                  <tr *ngIf="adverseEvents().length === 0">
-                    <td colspan="7" class="empty-state">No adverse events recorded for this subject.</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <!-- 4. SIGNATURES HISTORY TAB -->
-          <div *ngIf="detailTab() === 'signatures'">
-            <h4>Electronic Signatures Applied</h4>
-            <div class="table-container" style="margin-top: 12px;">
-              <table class="data-table">
-                <thead>
-                  <tr>
-                    <th>Signer</th>
-                    <th>Meaning</th>
-                    <th>Ver.</th>
-                    <th>Signed At</th>
-                    <th>SHA-256 Checksum Hash</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr *ngFor="let s of signatureHistory()">
-                    <td>{{ s.signerName }}</td>
-                    <td><span class="role-pill">{{ s.meaning }}</span></td>
-                    <td>v{{ s.entityVersion }}</td>
-                    <td>{{ s.signedAt | date:'medium' }}</td>
-                    <td style="font-family: monospace; font-size: 11px; max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" [title]="s.signatureHash">
-                      {{ s.signatureHash }}
-                    </td>
-                  </tr>
-                  <tr *ngIf="signatureHistory().length === 0">
-                    <td colspan="5" class="empty-state">No electronic signatures applied to this subject.</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
+        <div class="head-actions">
+          <button class="btn btn-secondary" (click)="selectedSubject.set(null)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+            Back to Subjects
+          </button>
+          <button class="btn btn-primary" *ngIf="selectedSubject().status === 'Enrolled'" (click)="openSignatureModal('Reviewed')">
+            Sign &amp; Review Subject
+          </button>
         </div>
       </div>
 
-      <!-- ── MODALS ── -->
+      <!-- Tabs -->
+      <div class="tabs">
+        <button class="tab" [class.active]="detailTab() === 'details'" (click)="detailTab.set('details')">Subject Details</button>
+        <button class="tab" [class.active]="detailTab() === 'visits'" (click)="detailTab.set('visits')">Visits</button>
+        <button class="tab" [class.active]="detailTab() === 'events'" (click)="detailTab.set('events')">Adverse Events</button>
+        <button class="tab" [class.active]="detailTab() === 'signatures'" (click)="detailTab.set('signatures')">Workflow Signatures</button>
+      </div>
 
-      <!-- 1. ENROLL SUBJECT MODAL -->
-      <div class="modal-overlay" *ngIf="showEnrollModal()">
-        <div class="modal-card">
-          <div class="modal-header">
-            <h3>Enroll New Clinical Subject</h3>
-            <button class="close-modal" (click)="showEnrollModal.set(false)">×</button>
-          </div>
-          <form (ngSubmit)="handleEnrollSubject()">
-            <div class="field">
-              <label>Subject Code (Auto-Generated)</label>
-              <input type="text" name="subjectCode" [value]="enrollForm.subjectCode" disabled style="background: #f7f5f2; font-weight: 700; color: #562200;">
-            </div>
-            <div class="form-row">
-              <div class="field">
-                <label>Trial Protocol</label>
-                <select name="trialId" [(ngModel)]="enrollForm.trialId" required>
-                  <option *ngFor="let t of trials()" [value]="t.trialId">{{ t.trialCode }} (Phase: {{ t.phase }})</option>
-                </select>
-              </div>
-              <div class="field">
-                <label>Assigned Investigation Site</label>
-                <select name="siteId" [(ngModel)]="enrollForm.siteId" required>
-                  <option *ngFor="let s of sites()" [value]="s.siteId">{{ s.siteName }}</option>
-                </select>
-              </div>
-            </div>
-            <div class="form-row">
-              <div class="field">
-                <label>Date of Birth</label>
-                <input type="date" name="dob" [(ngModel)]="enrollForm.dateOfBirth" required>
-              </div>
-              <div class="field">
-                <label>Gender</label>
-                <select name="gender" [(ngModel)]="enrollForm.gender" required>
-                  <option value="Male">Male</option>
-                  <option value="Female">Female</option>
-                  <option value="Other">Other</option>
-                </select>
-              </div>
-            </div>
-            <div class="form-row">
-              <div class="field">
-                <label>Consent Date</label>
-                <input type="date" name="consentDate" [(ngModel)]="enrollForm.consentDate" required>
-              </div>
-              <div class="field">
-                <label>Enrollment Date</label>
-                <input type="date" name="enrolmentDate" [(ngModel)]="enrollForm.enrolmentDate" required>
-              </div>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" (click)="showEnrollModal.set(false)">Cancel</button>
-              <button type="submit" class="btn btn-primary">Enroll Subject</button>
-            </div>
-          </form>
+      <div class="alert alert-error" *ngIf="errorMsg()">{{ errorMsg() }}</div>
+      <div class="alert alert-success" *ngIf="successMsg()">{{ successMsg() }}</div>
+
+      <!-- 1. SUBJECT DETAILS TAB -->
+      <div *ngIf="detailTab() === 'details'" class="detail-card">
+        <div class="detail-grid">
+          <div class="detail-field"><label>Subject Code</label><div class="value">{{ selectedSubject().subjectCode }}</div></div>
+          <div class="detail-field"><label>Date of Birth</label><div class="value">{{ selectedSubject().dateOfBirth }}</div></div>
+          <div class="detail-field"><label>Gender</label><div class="value">{{ selectedSubject().gender }}</div></div>
+          <div class="detail-field"><label>Consent Signed Date</label><div class="value">{{ selectedSubject().consentDate }}</div></div>
+          <div class="detail-field"><label>Enrollment Date</label><div class="value">{{ selectedSubject().enrolmentDate }}</div></div>
+          <div class="detail-field"><label>Trial Protocol</label><div class="value">{{ getTrialCode(selectedSubject().trialId) }}</div></div>
+          <div class="detail-field"><label>Investigation Site</label><div class="value">{{ getSiteName(selectedSubject().siteId) }}</div></div>
+          <div class="detail-field"><label>Verification Status</label><div class="value">{{ selectedSubject().status }}</div></div>
         </div>
       </div>
 
-      <!-- 2. ADD VISIT MODAL -->
-      <div class="modal-overlay" *ngIf="showAddVisitModal()">
-        <div class="modal-card">
-          <div class="modal-header">
-            <h3>Record Subject Visit</h3>
-            <button class="close-modal" (click)="showAddVisitModal.set(false)">×</button>
+      <!-- 2. VISITS TAB -->
+      <div *ngIf="detailTab() === 'visits'" class="table-card">
+        <div class="table-card-head">
+          <h3>Recorded Visit Entries <span class="count">· {{ visits().length }} total</span></h3>
+          <button class="btn btn-primary btn-sm btn-create" (click)="openAddVisitModal()">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+            <span>Record Visit</span>
+          </button>
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Visit Code</th>
+                <th>Visit Type</th>
+                <th>Scheduled Date</th>
+                <th>Actual Date</th>
+                <th>Observations / Notes</th>
+                <th>Sample Collected</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let v of visits()">
+                <td class="name-cell">{{ v.visitId }}</td>
+                <td>{{ v.visitType }}</td>
+                <td>{{ v.scheduledDate }}</td>
+                <td>{{ v.actualDate }}</td>
+                <td>{{ v.observations }}</td>
+                <td>
+                  <span class="badge-status" [class.badge-approved]="v.sampleCollected" [class.badge-draft]="!v.sampleCollected">
+                    {{ v.sampleCollected ? 'Yes' : 'No' }}
+                  </span>
+                </td>
+                <td>
+                  <span class="badge-status"
+                    [class.badge-draft]="v.status === 'Scheduled'"
+                    [class.badge-approved]="v.status === 'Completed'"
+                    [class.badge-rejected]="v.status === 'Missed'">
+                    {{ v.status }}
+                  </span>
+                </td>
+              </tr>
+              <tr *ngIf="visits().length === 0">
+                <td colspan="7" class="empty-state">No visits recorded for this subject.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 3. ADVERSE EVENTS TAB -->
+      <div *ngIf="detailTab() === 'events'" class="table-card">
+        <div class="table-card-head">
+          <h3>Adverse Events Manifest <span class="count">· {{ adverseEvents().length }} total</span></h3>
+          <button class="btn btn-primary btn-sm btn-create" (click)="openAddEventModal()">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+            <span>Record Event</span>
+          </button>
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>AE Code</th>
+                <th>Visit ID</th>
+                <th>Description</th>
+                <th>Severity</th>
+                <th>Relatedness</th>
+                <th>Onset Date</th>
+                <th>Outcome Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let ae of adverseEvents()">
+                <td class="name-cell">{{ ae.aeId }}</td>
+                <td>{{ ae.visitId }}</td>
+                <td>{{ ae.description }}</td>
+                <td>
+                  <span class="badge-status"
+                    [class.badge-submitted]="ae.severity === 'Minor'"
+                    [class.badge-progress]="ae.severity === 'Major'"
+                    [class.badge-rejected]="ae.severity === 'Critical'">
+                    {{ ae.severity }}
+                  </span>
+                </td>
+                <td>{{ ae.relatedness }}</td>
+                <td>{{ ae.onsetDate }}</td>
+                <td><span class="badge-status badge-active">{{ ae.status }}</span></td>
+              </tr>
+              <tr *ngIf="adverseEvents().length === 0">
+                <td colspan="7" class="empty-state">No adverse events recorded for this subject.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 4. WORKFLOW SIGNATURES TAB -->
+      <div *ngIf="detailTab() === 'signatures'" class="table-card">
+        <div class="table-card-head">
+          <h3>Electronic Signatures Applied <span class="count">· {{ signatureHistory().length }} total</span></h3>
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Signer</th>
+                <th>Meaning</th>
+                <th>Ver.</th>
+                <th>Signed At</th>
+                <th>SHA-256 Checksum Hash</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let s of signatureHistory()">
+                <td class="name-cell">{{ s.signerName }}</td>
+                <td><span class="badge-status badge-submitted">{{ s.meaning }}</span></td>
+                <td>v{{ s.entityVersion }}</td>
+                <td>{{ s.signedAt | date:'medium' }}</td>
+                <td class="hash-cell" [title]="s.signatureHash">{{ s.signatureHash }}</td>
+              </tr>
+              <tr *ngIf="signatureHistory().length === 0">
+                <td colspan="5" class="empty-state">No electronic signatures applied to this subject.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ MODALS ============ -->
+
+    <!-- 1. ENROLL SUBJECT MODAL -->
+    <div class="modal-overlay" *ngIf="showEnrollModal()">
+      <div class="modal">
+        <button type="button" class="modal-close-x" (click)="closeWithConfirm(showEnrollModal)" aria-label="Close">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+        <h2>Enroll New Clinical Subject</h2>
+        <form (ngSubmit)="handleEnrollSubject()">
+          <div class="form-grid">
+            <div class="field full">
+              <label>Subject Code<span class="req">*</span></label>
+              <input type="text" name="subjectCode" [value]="enrollForm.subjectCode" disabled>
+              <div class="field-hint">Auto-generated</div>
+            </div>
+            <div class="field">
+              <label>Trial Protocol<span class="req">*</span></label>
+              <select name="trialId" [(ngModel)]="enrollForm.trialId" required>
+                <option *ngFor="let t of trials()" [value]="t.trialId">{{ t.trialCode }} (Phase: {{ t.phase }})</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Assigned Investigation Site<span class="req">*</span></label>
+              <select name="siteId" [(ngModel)]="enrollForm.siteId" required>
+                <option *ngFor="let s of sites()" [value]="s.siteId">{{ s.siteName }}</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Date of Birth<span class="req">*</span></label>
+              <input type="date" name="dob" [(ngModel)]="enrollForm.dateOfBirth" required>
+            </div>
+            <div class="field">
+              <label>Gender<span class="req">*</span></label>
+              <select name="gender" [(ngModel)]="enrollForm.gender" required>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Consent Date<span class="req">*</span></label>
+              <input type="date" name="consentDate" [(ngModel)]="enrollForm.consentDate" required>
+            </div>
+            <div class="field">
+              <label>Enrollment Date<span class="req">*</span></label>
+              <input type="date" name="enrolmentDate" [(ngModel)]="enrollForm.enrolmentDate" required>
+            </div>
           </div>
-          <form (ngSubmit)="handleRecordVisit()">
-            <div class="field">
-              <label>Visit Code (Auto-Generated ID)</label>
-              <input type="text" name="visitId" [value]="addVisitForm.visitId" disabled style="background: #f7f5f2; font-weight: 700; color: #562200;">
-            </div>
-            <div class="form-row">
-              <div class="field">
-                <label>Visit Type / Name</label>
-                <input type="text" name="visitType" [(ngModel)]="addVisitForm.visitType" placeholder="e.g. Week 2 Follow-Up" required>
-              </div>
-              <div class="field">
-                <label>Status</label>
-                <select name="vStatus" [(ngModel)]="addVisitForm.status" required>
-                  <option value="Scheduled">Scheduled</option>
-                  <option value="Completed">Completed</option>
-                  <option value="Missed">Missed</option>
-                </select>
-              </div>
-            </div>
-            <div class="form-row">
-              <div class="field">
-                <label>Scheduled Date</label>
-                <input type="date" name="schedD" [(ngModel)]="addVisitForm.scheduledDate" required>
-              </div>
-              <div class="field">
-                <label>Actual Visit Date</label>
-                <input type="date" name="actD" [(ngModel)]="addVisitForm.actualDate" required>
-              </div>
+          <div class="form-footer">
+            <button type="submit" class="btn btn-primary">Enroll Subject</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- 2. ADD VISIT MODAL -->
+    <div class="modal-overlay" *ngIf="showAddVisitModal()">
+      <div class="modal">
+        <button type="button" class="modal-close-x" (click)="closeWithConfirm(showAddVisitModal)" aria-label="Close">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+        <h2>Record Subject Visit</h2>
+        <form (ngSubmit)="handleRecordVisit()">
+          <div class="form-grid">
+            <div class="field full">
+              <label>Visit Code<span class="req">*</span></label>
+              <input type="text" name="visitId" [value]="addVisitForm.visitId" disabled>
+              <div class="field-hint">Auto-generated</div>
             </div>
             <div class="field">
-              <label>Observations / Clinical Findings</label>
+              <label>Visit Type / Name<span class="req">*</span></label>
+              <input type="text" name="visitType" [(ngModel)]="addVisitForm.visitType" placeholder="e.g. Week 2 Follow-Up" required>
+            </div>
+            <div class="field">
+              <label>Status<span class="req">*</span></label>
+              <select name="vStatus" [(ngModel)]="addVisitForm.status" required>
+                <option value="Scheduled">Scheduled</option>
+                <option value="Completed">Completed</option>
+                <option value="Missed">Missed</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Scheduled Date<span class="req">*</span></label>
+              <input type="date" name="schedD" [(ngModel)]="addVisitForm.scheduledDate" required>
+            </div>
+            <div class="field">
+              <label>Actual Visit Date<span class="req">*</span></label>
+              <input type="date" name="actD" [(ngModel)]="addVisitForm.actualDate" required>
+            </div>
+            <div class="field full">
+              <label>Observations / Clinical Findings<span class="req">*</span></label>
               <input type="text" name="obs" [(ngModel)]="addVisitForm.observations" placeholder="Vitals normal, no complaints" required>
             </div>
-            <div class="field">
-              <label class="remember">
+            <div class="field full">
+              <label class="check-field">
                 <input type="checkbox" name="sample" [(ngModel)]="addVisitForm.sampleCollected"> Biological Sample Collected
               </label>
             </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" (click)="showAddVisitModal.set(false)">Cancel</button>
-              <button type="submit" class="btn btn-primary">Record Visit</button>
-            </div>
-          </form>
-        </div>
-      </div>
-
-      <!-- 3. ADD ADVERSE EVENT MODAL -->
-      <div class="modal-overlay" *ngIf="showAddEventModal()">
-        <div class="modal-card">
-          <div class="modal-header">
-            <h3>Record Adverse Event (AE)</h3>
-            <button class="close-modal" (click)="showAddEventModal.set(false)">×</button>
           </div>
-          <form (ngSubmit)="handleRecordEvent()">
-            <div class="field">
-              <label>Event Code (Auto-Generated ID)</label>
-              <input type="text" name="aeId" [value]="addEventForm.aeId" disabled style="background: #f7f5f2; font-weight: 700; color: #562200;">
+          <div class="form-footer">
+            <button type="submit" class="btn btn-primary">Record Visit</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- 3. ADD ADVERSE EVENT MODAL -->
+    <div class="modal-overlay" *ngIf="showAddEventModal()">
+      <div class="modal">
+        <button type="button" class="modal-close-x" (click)="closeWithConfirm(showAddEventModal)" aria-label="Close">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+        <h2>Record Adverse Event (AE)</h2>
+        <form (ngSubmit)="handleRecordEvent()">
+          <div class="form-grid">
+            <div class="field full">
+              <label>Event Code<span class="req">*</span></label>
+              <input type="text" name="aeId" [value]="addEventForm.aeId" disabled>
+              <div class="field-hint">Auto-generated</div>
             </div>
-            <div class="form-row">
-              <div class="field">
-                <label>Select Associated Visit</label>
-                <select name="visitId" [(ngModel)]="addEventForm.visitId" required>
-                  <option *ngFor="let v of visits()" [value]="v.visitId">{{ v.visitType }} ({{ v.actualDate }})</option>
-                </select>
-              </div>
-              <div class="field">
-                <label>Severity Level</label>
-                <select name="severity" [(ngModel)]="addEventForm.severity" required>
-                  <option value="Minor">Minor</option>
-                  <option value="Major">Major</option>
-                  <option value="Critical">Critical</option>
-                </select>
-              </div>
+            <div class="field">
+              <label>Select Associated Visit<span class="req">*</span></label>
+              <select name="visitId" [(ngModel)]="addEventForm.visitId" required>
+                <option *ngFor="let v of visits()" [value]="v.visitId">{{ v.visitType }} ({{ v.actualDate }})</option>
+              </select>
             </div>
             <div class="field">
-              <label>Event Description</label>
+              <label>Severity Level<span class="req">*</span></label>
+              <select name="severity" [(ngModel)]="addEventForm.severity" required>
+                <option value="Minor">Minor</option>
+                <option value="Major">Major</option>
+                <option value="Critical">Critical</option>
+              </select>
+            </div>
+            <div class="field full">
+              <label>Event Description<span class="req">*</span></label>
               <input type="text" name="desc" [(ngModel)]="addEventForm.description" placeholder="e.g. Mild headache, hives on left arm" required>
             </div>
-            <div class="form-row">
-              <div class="field">
-                <label>Relatedness to Investigational Product</label>
-                <select name="rel" [(ngModel)]="addEventForm.relatedness" required>
-                  <option value="Unrelated">Unrelated</option>
-                  <option value="Possible">Possible</option>
-                  <option value="Probable">Probable</option>
-                </select>
-              </div>
-              <div class="field">
-                <label>Outcome Status</label>
-                <input type="text" name="aeStatus" [(ngModel)]="addEventForm.status" placeholder="e.g. Resolved" required>
-              </div>
-            </div>
-            <div class="form-row">
-              <div class="field">
-                <label>Onset Date</label>
-                <input type="date" name="onDate" [(ngModel)]="addEventForm.onsetDate" required>
-              </div>
-              <div class="field">
-                <label>Resolution Date</label>
-                <input type="date" name="resDate" [(ngModel)]="addEventForm.resolutionDate">
-              </div>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" (click)="showAddEventModal.set(false)">Cancel</button>
-              <button type="submit" class="btn btn-primary">Log Event</button>
-            </div>
-          </form>
-        </div>
-      </div>
-
-      <!-- 4. ELECTRONIC SIGNATURE DIALOG -->
-      <div class="modal-overlay" *ngIf="showSignatureModal()">
-        <div class="modal-card" style="max-width: 420px;">
-          <div class="modal-header">
-            <h3>Electronic Signature Verification</h3>
-            <button class="close-modal" (click)="showSignatureModal.set(false)">×</button>
-          </div>
-          <div class="details-pane" style="font-size: 13.5px; margin-bottom: 8px;">
-            <p>You are applying a legally binding electronic signature to transition this subject's verification state.</p>
-            <div class="detail-item"><span class="label">Action:</span> Transition to <strong>{{ targetStatus() }}</strong></div>
-            <div class="detail-item"><span class="label">Meaning:</span> REVIEWED</div>
-          </div>
-          <form (ngSubmit)="executeSignatureTransition()">
             <div class="field">
-              <label>Verify Identity Password</label>
-              <input type="password" name="sigPwd" [(ngModel)]="signaturePassword" placeholder="Enter your credentials password" required>
+              <label>Relatedness to Investigational Product<span class="req">*</span></label>
+              <select name="rel" [(ngModel)]="addEventForm.relatedness" required>
+                <option value="Unrelated">Unrelated</option>
+                <option value="Possible">Possible</option>
+                <option value="Probable">Probable</option>
+              </select>
             </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" (click)="showSignatureModal.set(false)">Cancel</button>
-              <button type="submit" class="btn btn-primary" [disabled]="signing()">
-                {{ signing() ? 'Signing...' : 'Verify & Commit' }}
-              </button>
+            <div class="field">
+              <label>Outcome Status<span class="req">*</span></label>
+              <input type="text" name="aeStatus" [(ngModel)]="addEventForm.status" placeholder="e.g. Resolved" required>
             </div>
-          </form>
+            <div class="field">
+              <label>Onset Date<span class="req">*</span></label>
+              <input type="date" name="onDate" [(ngModel)]="addEventForm.onsetDate" required>
+            </div>
+            <div class="field">
+              <label>Resolution Date</label>
+              <input type="date" name="resDate" [(ngModel)]="addEventForm.resolutionDate">
+            </div>
+          </div>
+          <div class="form-footer">
+            <button type="submit" class="btn btn-primary">Log Event</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- 4. ELECTRONIC SIGNATURE DIALOG -->
+    <div class="modal-overlay" *ngIf="showSignatureModal()">
+      <div class="modal modal-sm">
+        <button type="button" class="modal-close-x" (click)="closeWithConfirm(showSignatureModal)" aria-label="Close">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+        <h2>Electronic Signature Verification</h2>
+        <div class="info-banner">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+          <div>
+            You are applying a legally binding electronic signature to transition this subject's verification state.
+            <div style="margin-top:8px;">Action: Transition to <strong>{{ targetStatus() }}</strong> &nbsp;·&nbsp; Meaning: <strong>REVIEWED</strong></div>
+          </div>
         </div>
+        <form (ngSubmit)="executeSignatureTransition()">
+          <div class="field">
+            <label>Verify Identity Password<span class="req">*</span></label>
+            <input type="password" name="sigPwd" [(ngModel)]="signaturePassword" placeholder="Enter your credentials password" required>
+          </div>
+          <div class="form-footer">
+            <button type="submit" class="btn btn-primary" [disabled]="signing()">
+              {{ signing() ? 'Signing...' : 'Verify & Commit' }}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   `,
   styles: [`
-    .subjects-container {
-      background: #ffffff;
-      border: 1px solid #ece4dc;
-      border-radius: 14px;
-      padding: 32px;
-    }
-    .panel-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 24px;
-    }
-    .panel-header h2 {
-      font-family: 'Manrope', sans-serif;
-      font-size: 24px;
-      font-weight: 800;
-      color: #211611;
-      margin: 0 0 6px;
-    }
-    .panel-header p {
-      color: #7a6a5e;
-      font-size: 14px;
-      margin: 0;
-    }
-    .table-container {
-      overflow-x: auto;
-      margin-bottom: 20px;
-      border: 1px solid #ece4dc;
-      border-radius: 10px;
-    }
-    .data-table {
-      width: 100%;
-      border-collapse: collapse;
-      text-align: left;
-      font-size: 14px;
-    }
-    .data-table th {
-      background: #f7f5f2;
-      color: #211611;
-      font-weight: 700;
-      padding: 14px 16px;
-      border-bottom: 1px solid #ece4dc;
-    }
-    .data-table td {
-      padding: 14px 16px;
-      border-bottom: 1px solid #ece4dc;
-      color: #211611;
-      vertical-align: middle;
-    }
-    .status-indicator {
-      display: inline-block;
-      padding: 3px 10px;
-      border-radius: 6px;
-      font-size: 12px;
-      font-weight: 700;
-      text-transform: uppercase;
-      border: 1px solid transparent;
-    }
-    .status-enrolled {
-      background: #fff8e1;
-      color: #f57f17;
-      border-color: #ffe082;
-    }
-    .status-reviewed {
-      background: #e8f5e9;
-      color: #2e7d32;
-      border-color: #c8e6c9;
-    }
-    .severity-pill {
-      display: inline-block;
-      padding: 2px 8px;
-      border-radius: 4px;
-      font-size: 12.5px;
-      font-weight: 600;
-    }
-    .sev-minor { background: #e8f1fa; color: #1d5f9e; }
-    .sev-major { background: #fff8e1; color: #f57f17; }
-    .sev-critical { background: #fbeceb; color: #b3261e; }
-    .pagination {
-      display: flex;
-      justify-content: flex-end;
-      align-items: center;
-      gap: 16px;
-      font-size: 13.5px;
-      color: #7a6a5e;
-    }
-    .pagination button {
-      background: #ffffff;
-      border: 1px solid #ece4dc;
-      padding: 6px 14px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: 600;
-      color: #211611;
-    }
-    .pagination button:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-    .detail-panel {
-      text-align: left;
-    }
-    .detail-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 20px;
-      margin-bottom: 24px;
-      border-bottom: 1px solid #ece4dc;
-      padding-bottom: 16px;
-    }
-    .header-title {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    .header-title h3 {
-      font-family: 'Manrope', sans-serif;
-      margin: 0;
-      font-size: 20px;
-      font-weight: 800;
-      color: #211611;
-    }
-    .workflow-controls {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-    }
-    .detail-tabs {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 20px;
-    }
-    .detail-tabs button {
-      background: none;
-      border: none;
-      padding: 10px 18px;
-      font-size: 14px;
-      font-weight: 600;
-      color: #7a6a5e;
-      cursor: pointer;
-      border-radius: 6px;
-      transition: background 0.15s ease, color 0.15s ease;
-    }
-    .detail-tabs button:hover {
-      background: #fbe9de;
-      color: #CE5200;
-    }
-    .detail-tabs button.active {
-      background: #fbe9de;
-      color: #CE5200;
-      border: 1px solid #ece4dc;
-    }
-    .tab-card {
-      border: 1px solid #ece4dc;
-      border-radius: 12px;
-      padding: 24px;
-    }
-    .grid-details {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 20px;
-    }
-    .detail-item {
-      font-size: 14px;
-      color: #211611;
-    }
-    .detail-item .label {
-      font-weight: 700;
-      color: #7a6a5e;
-      display: inline-block;
-      width: 180px;
-    }
-    .tab-action-bar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .tab-action-bar h4 {
-      margin: 0;
-      font-family: 'Manrope', sans-serif;
-      font-size: 16px;
-      font-weight: 800;
-    }
-    .btn {
-      padding: 10px 18px;
-      border-radius: 8px;
-      font-size: 14px;
-      font-weight: 700;
-      cursor: pointer;
-      border: none;
-      font-family: inherit;
-    }
-    .btn-sm {
-      padding: 6px 12px;
-      font-size: 12.5px;
-    }
-    .btn-primary {
-      background: #CE5200;
-      color: #fff;
-    }
-    .btn-primary:hover:not(:disabled) {
-      background: #562200;
-    }
-    .btn-secondary {
-      background: #ffffff;
-      border: 1px solid #ece4dc;
-      color: #211611;
-    }
-    .btn-secondary:hover {
-      background: #fbe9de;
-      color: #CE5200;
-    }
-    .modal-overlay {
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(42, 20, 8, 0.4);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 100;
-    }
-    .modal-card {
-      background: #ffffff;
-      border-radius: 14px;
-      width: 100%;
-      max-width: 500px;
-      padding: 32px;
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
-      max-height: 90vh;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-    }
-    .modal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid #ece4dc;
-      padding-bottom: 12px;
-    }
-    .modal-header h3 {
-      font-family: 'Manrope', sans-serif;
-      margin: 0;
-      font-size: 18px;
-      font-weight: 800;
-      color: #211611;
-    }
-    .close-modal {
-      background: none;
-      border: none;
-      font-size: 24px;
-      cursor: pointer;
-      color: #7a6a5e;
-    }
-    .field {
-      text-align: left;
-      margin-bottom: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-    .field label {
-      font-size: 13px;
-      font-weight: 700;
-      color: #211611;
-    }
-    .field input, .field select {
-      padding: 10px 12px;
-      border: 1px solid #ece4dc;
-      border-radius: 6px;
-      font-size: 14px;
-      outline: none;
-      background: #ffffff;
-    }
-    .field input:focus, .field select:focus {
-      border-color: #CE5200;
-    }
-    .form-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-    }
-    .modal-footer {
-      display: flex;
-      justify-content: flex-end;
-      gap: 12px;
-      border-top: 1px solid #ece4dc;
-      padding-top: 16px;
-    }
-    .alert {
-      padding: 10px 14px;
-      border-radius: 8px;
-      margin-bottom: 20px;
-      font-size: 13.5px;
-    }
-    .alert-error {
-      background: #fbeceb;
-      color: #b3261e;
-      border: 1px solid #f5c2c0;
-    }
-    .alert-success {
-      background: #e8f5e9;
-      color: #2e7d32;
-      border: 1px solid #c8e6c9;
-    }
-    .empty-state {
-      text-align: center;
-      color: #7a6a5e;
-      font-style: italic;
-      padding: 24px !important;
-    }
-    .details-pane {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      text-align: left;
-    }
-    .detail-item .label {
-      font-weight: 700;
-      color: #7a6a5e;
-      width: 140px;
-      display: inline-block;
-    }
-    .remember {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      color: #211611;
-      font-weight: 600;
-      cursor: pointer;
-    }
-    .remember input {
-      width: 16px;
-      height: 16px;
-      accent-color: #CE5200;
-    }
+    :host{display:block;}
+
+    /* Tabs (subject detail) */
+    .tabs{display:flex;gap:30px;margin-bottom:24px;border-bottom:1px solid var(--border);}
+    .tab{appearance:none;border:none;background:none;font-family:inherit;font-size:14.5px;font-weight:600;color:var(--text-dim);padding:10px 2px;cursor:pointer;position:relative;top:1px;border-bottom:2px solid transparent;}
+    .tab:hover{color:var(--text);}
+    .tab.active{color:var(--text);border-bottom:2px solid var(--text);}
+
+    /* Page-head action cluster */
+    .head-actions{display:flex;align-items:center;gap:12px;flex-shrink:0;}
+
+    /* Row action dropdown reveal without extra state */
+    .row-actions .dropdown-menu{display:none;}
+    .row-actions:hover .dropdown-menu,
+    .row-actions:focus-within .dropdown-menu{display:block;}
+
+    /* Detail card */
+    .detail-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:30px 34px;}
+
+    /* Table-card action button spacing */
+    .table-card-head .btn{margin:-2px 0;}
+
+    /* Neutral badge (not defined globally) */
+    .badge-draft{background:#eef0ef;color:#3c463f;}
+
+    /* Signature hash cell */
+    .hash-cell{font-family:'SFMono-Regular',Consolas,monospace;font-size:11.5px;max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-dim);}
+
+    /* Modal sizing helpers */
+    .modal{max-height:88vh;overflow-y:auto;}
+    .modal-sm{max-width:440px;}
+
+    /* Checkbox field */
+    .check-field{display:flex;align-items:center;gap:10px;font-size:14px;font-weight:600;color:var(--text);cursor:pointer;}
+    .check-field input{width:16px;height:16px;accent-color:var(--accent);}
+
+    /* Alerts */
+    .alert{padding:11px 16px;border-radius:var(--radius-sm);margin-bottom:20px;font-size:13.5px;}
+    .alert-error{background:var(--danger-light);color:var(--danger);border:1px solid #f5c2c0;}
+    .alert-success{background:#e6f4ec;color:#2f7d4f;border:1px solid #c8e6c9;}
+
+    /* Empty state */
+    .empty-state{text-align:center;color:var(--text-dim);font-style:italic;padding:40px 20px;}
+
+    /* Funnel status filter dropdown */
+    .filter-select{position:relative;display:inline-flex;align-items:center;min-width:200px;}
+    .filter-select .funnel-ico{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--text-dim);pointer-events:none;}
+    .filter-select .caret-ico{position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--text-dim);pointer-events:none;}
+    .filter-select select{appearance:none;-webkit-appearance:none;-moz-appearance:none;width:100%;border:1px solid var(--border);border-radius:var(--radius-sm);padding:11px 36px 11px 38px;font-size:14px;background:transparent;color:var(--text);font-family:inherit;cursor:pointer;}
+    .filter-select select:focus{outline:none;border-color:var(--accent);}
   `]
 })
 export class SubjectsComponent implements OnInit {
@@ -1102,5 +858,12 @@ export class SubjectsComponent implements OnInit {
   clearMessages() {
     this.errorMsg.set(null);
     this.successMsg.set(null);
+  }
+
+  // Close an input modal only after confirming discard of unsaved changes
+  closeWithConfirm(modalSignal: { set: (v: boolean) => void }) {
+    if (window.confirm('Discard unsaved changes?')) {
+      modalSignal.set(false);
+    }
   }
 }

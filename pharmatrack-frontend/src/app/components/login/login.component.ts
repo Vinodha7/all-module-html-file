@@ -11,19 +11,20 @@ import { AuthService } from '../../services/auth.service';
   template: `
     <div class="login-wrapper">
       <div class="login-card">
-        <!-- Logo -->
-        <div class="logo">
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/>
-          </svg>
-        </div>
+        <!-- Brand -->
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2l7 4v6c0 4.5-3 7.5-7 10-4-2.5-7-5.5-7-10V6l7-4z"/><path d="M9 12l2 2 4-4"/>
+            </svg>
+          </span>
+          <div class="brand-name">PharmaTrack</div>
 
-        <div class="brand-name">PharmaTrack</div>
-        
-        <!-- Tab Subtitles -->
-        <div class="brand-sub" *ngIf="viewMode() === 'login'">Sign in to continue</div>
-        <div class="brand-sub" *ngIf="viewMode() === 'forgot'">Recover your account password</div>
-        <div class="brand-sub" *ngIf="viewMode() === 'reset'">Set your new secure password</div>
+          <!-- Tab Subtitles -->
+          <div class="brand-sub" *ngIf="viewMode() === 'login'">Sign in to continue</div>
+          <div class="brand-sub" *ngIf="viewMode() === 'forgot'">Recover your account password</div>
+          <div class="brand-sub" *ngIf="viewMode() === 'reset'">Set your new secure password</div>
+        </div>
 
         <!-- Alert messages -->
         <div class="alert alert-error" *ngIf="errorMsg()">
@@ -34,50 +35,60 @@ import { AuthService } from '../../services/auth.service';
         </div>
 
         <!-- 1. LOGIN FORM -->
-        <form *ngIf="viewMode() === 'login'" (ngSubmit)="handleLogin()">
-          <div class="field">
+        <form *ngIf="viewMode() === 'login'" (ngSubmit)="handleLogin()" novalidate>
+          <div class="login-field">
             <label for="email">Email</label>
-            <input 
-              type="email" 
-              id="email" 
+            <input
+              type="email"
+              id="email"
               name="email"
-              placeholder="Enter your email" 
-              [(ngModel)]="email" 
-              required>
+              placeholder="you@pharmatrack.com"
+              autocomplete="username"
+              #emailModel="ngModel"
+              [(ngModel)]="email"
+              required
+              email
+              [class.invalid]="(emailModel.touched || submitted()) && emailModel.invalid">
+            <div class="field-error" *ngIf="(emailModel.touched || submitted()) && emailModel.errors?.['required']">Email is required.</div>
+            <div class="field-error" *ngIf="(emailModel.touched || submitted()) && emailModel.errors?.['email'] && !emailModel.errors?.['required']">Enter a valid email address.</div>
           </div>
-          
-          <div class="field">
+
+          <div class="login-field">
             <label for="password">Password</label>
             <div class="password-wrap">
-              <input 
-                [type]="showPassword() ? 'text' : 'password'" 
-                id="password" 
+              <input
+                [type]="showPassword() ? 'text' : 'password'"
+                id="password"
                 name="password"
-                placeholder="Enter your password" 
-                [(ngModel)]="password" 
-                required>
-              <button type="button" class="eye-btn" (click)="togglePassword()" aria-label="Toggle password visibility">
+                placeholder="Enter your password"
+                autocomplete="current-password"
+                #passwordModel="ngModel"
+                [(ngModel)]="password"
+                required
+                [class.invalid]="(passwordModel.touched || submitted()) && passwordModel.invalid">
+              <button type="button" class="password-toggle" (click)="togglePassword()" [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'">
                 <!-- Single eye icon toggles dynamically -->
-                <svg *ngIf="!showPassword()" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <svg *ngIf="!showPassword()" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/><circle cx="12" cy="12" r="3"/>
                 </svg>
-                <svg *ngIf="showPassword()" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                <svg *ngIf="showPassword()" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-11-8-11-8a21.6 21.6 0 0 1 5.06-6.06M9.9 4.24A10.9 10.9 0 0 1 12 4c7 0 11 8 11 8a21.6 21.6 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
                   <line x1="1" y1="1" x2="23" y2="23"/>
                 </svg>
               </button>
             </div>
+            <div class="field-error" *ngIf="(passwordModel.touched || submitted()) && passwordModel.errors?.['required']">Password is required.</div>
           </div>
 
           <div class="row-between">
-            <label class="remember">
+            <label class="login-checkbox">
               <input type="checkbox" name="rememberMe" [(ngModel)]="rememberMe"> Remember me
             </label>
-            <a class="forgot-link" routerLink="/forgot-password">Forgot password?</a>
+            <a class="login-link" routerLink="/forgot-password">Forgot password?</a>
           </div>
 
           <button type="submit" class="btn-signin" [disabled]="loading()">
-            <svg *ngIf="!loading()" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg *ngIf="!loading()" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/>
             </svg>
             <span *ngIf="loading()">Signing in...</span>
@@ -86,16 +97,22 @@ import { AuthService } from '../../services/auth.service';
         </form>
 
         <!-- 2. FORGOT PASSWORD FORM -->
-        <form *ngIf="viewMode() === 'forgot'" (ngSubmit)="handleForgotPassword()">
-          <div class="field">
+        <form *ngIf="viewMode() === 'forgot'" (ngSubmit)="handleForgotPassword()" novalidate>
+          <div class="login-field">
             <label for="forgotEmail">Email Address</label>
-            <input 
-              type="email" 
-              id="forgotEmail" 
+            <input
+              type="email"
+              id="forgotEmail"
               name="forgotEmail"
-              placeholder="Enter your email address" 
-              [(ngModel)]="email" 
-              required>
+              placeholder="you@pharmatrack.com"
+              autocomplete="username"
+              #forgotEmailModel="ngModel"
+              [(ngModel)]="email"
+              required
+              email
+              [class.invalid]="(forgotEmailModel.touched || submitted()) && forgotEmailModel.invalid">
+            <div class="field-error" *ngIf="(forgotEmailModel.touched || submitted()) && forgotEmailModel.errors?.['required']">Email is required.</div>
+            <div class="field-error" *ngIf="(forgotEmailModel.touched || submitted()) && forgotEmailModel.errors?.['email'] && !forgotEmailModel.errors?.['required']">Enter a valid email address.</div>
           </div>
 
           <button type="submit" class="btn-signin" [disabled]="loading()">
@@ -103,52 +120,54 @@ import { AuthService } from '../../services/auth.service';
             <span *ngIf="!loading()">Send Reset Link</span>
           </button>
 
-          <div style="margin-top: 18px;">
-            <a class="forgot-link" routerLink="/login">Back to Login</a>
+          <div class="form-foot">
+            <a class="login-link" routerLink="/login">Back to Login</a>
           </div>
         </form>
 
         <!-- 3. RESET PASSWORD FORM -->
-        <form *ngIf="viewMode() === 'reset'" (ngSubmit)="handleResetPassword()">
-          <div class="field">
+        <form *ngIf="viewMode() === 'reset'" (ngSubmit)="handleResetPassword()" novalidate>
+          <div class="login-field">
             <label for="newPassword">New Password</label>
             <div class="password-wrap">
-              <input 
-                [type]="showPassword() ? 'text' : 'password'" 
-                id="newPassword" 
+              <input
+                [type]="showPassword() ? 'text' : 'password'"
+                id="newPassword"
                 name="newPassword"
-                placeholder="Enter new password" 
-                [(ngModel)]="newPassword" 
+                placeholder="Enter new password"
+                autocomplete="new-password"
+                [(ngModel)]="newPassword"
                 (ngModelChange)="validateCriteria()"
                 required>
-              <button type="button" class="eye-btn" (click)="togglePassword()">
-                <svg *ngIf="!showPassword()" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <button type="button" class="password-toggle" (click)="togglePassword()" [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'">
+                <svg *ngIf="!showPassword()" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z"/><circle cx="12" cy="12" r="3"/>
                 </svg>
-                <svg *ngIf="showPassword()" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                <svg *ngIf="showPassword()" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-11-8-11-8a21.6 21.6 0 0 1 5.06-6.06M9.9 4.24A10.9 10.9 0 0 1 12 4c7 0 11 8 11 8a21.6 21.6 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
                   <line x1="1" y1="1" x2="23" y2="23"/>
                 </svg>
               </button>
             </div>
-            
+
             <!-- Criteria check -->
             <div class="password-criteria">
-              <div [class.met]="hasMinLength()">✓ Min 8 characters</div>
-              <div [class.met]="hasUppercase()">✓ At least 1 uppercase letter</div>
-              <div [class.met]="hasNumber()">✓ At least 1 number</div>
-              <div [class.met]="hasSymbol()">✓ At least 1 symbol</div>
+              <div [class.met]="hasMinLength()">Min 8 characters</div>
+              <div [class.met]="hasUppercase()">At least 1 uppercase letter</div>
+              <div [class.met]="hasNumber()">At least 1 number</div>
+              <div [class.met]="hasSymbol()">At least 1 symbol</div>
             </div>
           </div>
 
-          <div class="field">
+          <div class="login-field">
             <label for="confirmPassword">Confirm New Password</label>
-            <input 
-              type="password" 
-              id="confirmPassword" 
+            <input
+              type="password"
+              id="confirmPassword"
               name="confirmPassword"
-              placeholder="Confirm new password" 
-              [(ngModel)]="confirmPassword" 
+              placeholder="Confirm new password"
+              autocomplete="new-password"
+              [(ngModel)]="confirmPassword"
               required>
           </div>
 
@@ -156,89 +175,124 @@ import { AuthService } from '../../services/auth.service';
             <span *ngIf="loading()">Resetting...</span>
             <span *ngIf="!loading()">Reset Password</span>
           </button>
-          
-          <div style="margin-top: 18px;">
-            <a class="forgot-link" routerLink="/login">Cancel</a>
+
+          <div class="form-foot">
+            <a class="login-link" routerLink="/login">Cancel</a>
           </div>
         </form>
 
         <!-- Access note -->
-        <div class="protected-note">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <div class="divider-note">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
           </svg>
-          Protected environment. Access is logged and audited
+          Protected environment. Access is logged and audited.
         </div>
       </div>
     </div>
   `,
   styles: [`
+    :host {
+      display: block;
+    }
     .login-wrapper {
-      min-height: 100vh;
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      overflow: hidden;              /* never scroll — fit on one screen */
       display: flex;
       align-items: center;
       justify-content: center;
-      background: linear-gradient(135deg, #562200 0%, #CE5200 100%);
-      font-family: 'Inter', sans-serif;
+      padding: 16px;
+      font-family: 'Inter', system-ui, sans-serif;
+      color: var(--text, #211611);
+      background:
+        radial-gradient(circle at 15% 15%, rgba(255,255,255,.06), transparent 40%),
+        linear-gradient(135deg, var(--sidebar-bg, #2a1408) 0%, var(--accent-dark, #562200) 60%, var(--accent, #CE5200) 100%);
     }
     .login-card {
-      background: #ffffff;
       width: 100%;
-      max-width: 440px;
-      margin: 40px 20px;
-      border-radius: 16px;
-      padding: 44px 40px 36px;
+      max-width: 400px;
+      background: var(--card, #ffffff);
+      border-radius: 18px;
       box-shadow: 0 30px 70px rgba(30, 16, 8, 0.35);
-      text-align: center;
+      padding: 28px 34px 24px;
     }
-    .logo {
-      width: 64px;
-      height: 64px;
-      border-radius: 16px;
-      background: #CE5200;
+    .brand {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      margin-bottom: 18px;
+    }
+    .brand-mark {
+      width: 44px;
+      height: 44px;
+      border-radius: 13px;
+      background: var(--accent, #CE5200);
       display: flex;
       align-items: center;
       justify-content: center;
-      margin: 0 auto 18px;
+      margin-bottom: 10px;
+    }
+    .brand-mark svg {
+      width: 24px;
+      height: 24px;
     }
     .brand-name {
       font-family: 'Manrope', sans-serif;
-      font-size: 26px;
+      font-size: 23px;
       font-weight: 800;
       letter-spacing: -0.02em;
-      color: #211611;
-      margin-bottom: 4px;
+      color: var(--text, #211611);
     }
     .brand-sub {
-      color: #7a6a5e;
-      font-size: 14.5px;
-      margin-bottom: 32px;
+      margin-top: 5px;
+      font-size: 13px;
+      color: var(--text-dim, #7a6a5e);
     }
-    .field {
+    .login-field {
       text-align: left;
-      margin-bottom: 20px;
+      margin-bottom: 14px;
     }
-    .field label {
+    .login-field label {
       display: block;
       font-size: 13.5px;
-      font-weight: 700;
-      margin-bottom: 9px;
-      color: #211611;
+      font-weight: 600;
+      color: var(--text, #211611);
+      margin-bottom: 7px;
     }
-    .field input {
+    .login-field input {
       width: 100%;
-      padding: 12px 14px;
-      border: 1px solid #ece4dc;
-      border-radius: 8px;
+      height: 44px;
+      padding: 0 14px;
+      border: 1px solid var(--border, #ece4dc);
+      border-radius: 9px;
       font-size: 14.5px;
       font-family: inherit;
-      background: #ffffff;
-      color: #211611;
-      outline: none;
-      transition: border-color 0.2s ease;
+      color: var(--text, #211611);
+      background: #fff;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
     }
-    .field input:focus {
-      border-color: #CE5200;
+    .login-field input::placeholder {
+      color: #a7b0aa;
+    }
+    .login-field input:focus {
+      outline: none;
+      border-color: var(--accent, #CE5200);
+      box-shadow: 0 0 0 3px rgba(206, 82, 0, 0.18);
+    }
+    /* Inline validation state */
+    .login-field input.invalid {
+      border-color: var(--danger, #b3261e);
+      box-shadow: 0 0 0 3px rgba(179, 38, 30, 0.14);
+    }
+    .field-error {
+      margin-top: 6px;
+      font-size: 12.5px;
+      font-weight: 500;
+      color: var(--danger, #b3261e);
+      text-align: left;
     }
     .password-wrap {
       position: relative;
@@ -246,96 +300,118 @@ import { AuthService } from '../../services/auth.service';
     .password-wrap input {
       padding-right: 44px;
     }
-    .eye-btn {
+    .password-toggle {
       position: absolute;
-      right: 10px;
       top: 50%;
+      right: 4px;
       transform: translateY(-50%);
-      background: none;
+      width: 38px;
+      height: 38px;
       border: none;
-      cursor: pointer;
-      color: #7a6a5e;
+      background: none;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 4px;
+      cursor: pointer;
+      color: var(--text-dim, #7a6a5e);
+      border-radius: 7px;
+      transition: background 0.15s ease, color 0.15s ease;
     }
-    .eye-btn:hover {
-      color: #CE5200;
+    .password-toggle:hover {
+      background: #f2f5f3;
+      color: var(--text, #211611);
+    }
+    .password-toggle svg {
+      width: 19px;
+      height: 19px;
     }
     .row-between {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin: -6px 0 24px;
-      font-size: 13.5px;
+      margin: 2px 0 16px;
     }
-    .remember {
+    .login-checkbox {
       display: flex;
       align-items: center;
       gap: 8px;
-      color: #7a6a5e;
+      font-size: 13px;
+      color: var(--text-dim, #7a6a5e);
+      cursor: pointer;
+      user-select: none;
+    }
+    .login-checkbox input {
+      width: 15px;
+      height: 15px;
+      accent-color: var(--accent, #CE5200);
       cursor: pointer;
     }
-    .remember input {
-      width: 16px;
-      height: 16px;
-      accent-color: #CE5200;
-      cursor: pointer;
-    }
-    .forgot-link {
-      color: #562200;
+    .login-link {
+      font-size: 13px;
       font-weight: 600;
+      color: var(--accent-dark, #562200);
       text-decoration: none;
       cursor: pointer;
     }
-    .forgot-link:hover {
+    .login-link:hover {
       text-decoration: underline;
-      color: #CE5200;
     }
     .btn-signin {
       width: 100%;
-      padding: 13px;
+      height: 44px;
       border: none;
-      border-radius: 8px;
-      background: #CE5200;
+      border-radius: 9px;
+      background: var(--accent, #CE5200);
       color: #fff;
-      font-size: 15px;
+      font-size: 14.5px;
       font-weight: 700;
-      cursor: pointer;
+      font-family: inherit;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 9px;
-      font-family: inherit;
-      transition: background 0.2s ease;
+      gap: 8px;
+      cursor: pointer;
+      transition: background 0.15s ease;
     }
     .btn-signin:hover:not(:disabled) {
-      background: #562200;
+      background: var(--accent-dark, #562200);
     }
     .btn-signin:disabled {
       opacity: 0.6;
       cursor: not-allowed;
     }
-    .protected-note {
+    .btn-signin svg {
+      width: 17px;
+      height: 17px;
+    }
+    .form-foot {
+      margin-top: 16px;
+      text-align: center;
+    }
+    .divider-note {
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 7px;
-      margin-top: 24px;
-      color: #7a6a5e;
+      gap: 8px;
+      margin-top: 16px;
+      color: var(--text-dim, #7a6a5e);
       font-size: 12px;
+    }
+    .divider-note svg {
+      width: 14px;
+      height: 14px;
+      flex-shrink: 0;
     }
     .alert {
       padding: 10px 14px;
-      border-radius: 8px;
-      margin-bottom: 20px;
-      font-size: 13.5px;
+      border-radius: 9px;
+      margin-bottom: 14px;
+      font-size: 13px;
       text-align: left;
     }
     .alert-error {
       background: #fbeceb;
-      color: #b3261e;
+      color: var(--danger, #b3261e);
       border: 1px solid #f5c2c0;
     }
     .alert-success {
@@ -346,17 +422,38 @@ import { AuthService } from '../../services/auth.service';
     .password-criteria {
       margin-top: 10px;
       font-size: 12px;
-      color: #7a6a5e;
       display: flex;
       flex-direction: column;
       gap: 4px;
     }
     .password-criteria div {
-      color: #b3261e;
+      position: relative;
+      padding-left: 18px;
+      color: var(--text-dim, #7a6a5e);
+      transition: color 0.15s ease;
+    }
+    .password-criteria div::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #c7cdc9;
     }
     .password-criteria div.met {
       color: #2e7d32;
       font-weight: 500;
+    }
+    .password-criteria div.met::before {
+      background: #2e7d32;
+    }
+    @media (max-width: 420px) {
+      .login-card {
+        padding: 24px 22px 20px;
+      }
     }
   `]
 })
@@ -369,6 +466,7 @@ export class LoginComponent implements OnInit {
   loading = signal<boolean>(false);
   errorMsg = signal<string | null>(null);
   successMsg = signal<string | null>(null);
+  submitted = signal<boolean>(false);
 
   // Inputs
   email = '';
@@ -402,6 +500,7 @@ export class LoginComponent implements OnInit {
       } else {
         this.viewMode.set('login');
       }
+      this.submitted.set(false);
       this.clearMessages();
     });
   }
@@ -430,12 +529,16 @@ export class LoginComponent implements OnInit {
     );
   }
 
+  private isValidEmail(value: string): boolean {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+  }
+
   handleLogin() {
+    this.submitted.set(true);
     this.clearMessages();
-    
-    // Perform simple validation on password before sending
-    if (this.password.length < 8 || !/[A-Z]/.test(this.password) || !/[0-9]/.test(this.password) || !/[^A-Za-z0-9]/.test(this.password)) {
-      this.errorMsg.set('Invalid credentials format. Check password requirements.');
+
+    // Inline field validation gates the request (see red messages under each field)
+    if (!this.email || !this.isValidEmail(this.email) || !this.password) {
       return;
     }
 
@@ -457,12 +560,12 @@ export class LoginComponent implements OnInit {
   }
 
   handleForgotPassword() {
+    this.submitted.set(true);
     this.clearMessages();
-    if (!this.email) {
-      this.errorMsg.set('Please provide a valid email address.');
+    if (!this.email || !this.isValidEmail(this.email)) {
       return;
     }
-    
+
     this.loading.set(true);
     this.authService.forgotPassword(this.email).subscribe({
       next: (res) => {
@@ -483,6 +586,7 @@ export class LoginComponent implements OnInit {
   }
 
   handleResetPassword() {
+    this.submitted.set(true);
     this.clearMessages();
     if (this.newPassword !== this.confirmPassword) {
       this.errorMsg.set('Passwords do not match.');

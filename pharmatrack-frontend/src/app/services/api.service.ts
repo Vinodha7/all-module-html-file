@@ -40,6 +40,10 @@ export class ApiService {
     return this.http.put<ApiResponse<any>>(`${this.gatewayUrl}/pharmaTrack/identityAccess/unlockUser/${userId}`, status, this.getOptions());
   }
 
+  updateUserStatus(userId: number, status: any): Observable<ApiResponse<any>> {
+    return this.http.put<ApiResponse<any>>(`${this.gatewayUrl}/pharmaTrack/identityAccess/updateUserStatus/${userId}`, status, this.getOptions());
+  }
+
   getLockedUsers(): Observable<ApiResponse<any[]>> {
     return this.http.get<ApiResponse<any[]>>(`${this.gatewayUrl}/pharmaTrack/identityAccess/fetchLockedUsers`, this.getOptions());
   }

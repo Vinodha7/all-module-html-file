@@ -7,156 +7,90 @@ import { ApiService } from '../../services/api.service';
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div class="notifications-container">
-      <div class="panel-header">
+    <div class="content">
+      <div class="page-head">
         <div>
-          <h2>User Notifications Center</h2>
-          <p>Real-time security triggers, workflow handoffs, and audit alerts.</p>
+          <h1 class="page-title">Notifications</h1>
+          <div class="page-sub">Protocol deviation alerts, batch hold notifications, cold chain breach warnings, and submission deadline reminders</div>
         </div>
       </div>
 
       <div class="alert alert-error" *ngIf="errorMsg()">{{ errorMsg() }}</div>
       <div class="alert alert-success" *ngIf="successMsg()">{{ successMsg() }}</div>
 
-      <!-- Notifications Table (Status moved to the last column, no Action column) -->
-      <div class="table-container">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>Category</th>
-              <th>Message</th>
-              <th>Logged Date</th>
-              <th style="width: 140px;">Status / Toggle Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let n of notifications()">
-              <td><span class="role-pill">{{ n.category }}</span></td>
-              <td style="font-weight: 500;">{{ n.message }}</td>
-              <td>{{ n.createdDate | date:'medium' }}</td>
-              <td>
-                <!-- Cyclical Status Action button -->
-                <button class="cycle-status-btn"
-                  [class.status-unread]="n.status === 'Unread'"
-                  [class.status-read]="n.status === 'Read'"
-                  [class.status-dismissed]="n.status === 'Dismissed'"
-                  (click)="cycleNotificationStatus(n)">
-                  <!-- Status text is the button label representing current state -->
-                  {{ n.status }}
-                </button>
-              </td>
-            </tr>
-            <tr *ngIf="notifications().length === 0">
-              <td colspan="4" class="empty-state">No notifications registered for your profile.</td>
-            </tr>
-          </tbody>
-        </table>
+      <div class="info-banner">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+        <div>Showing notifications for your profile only. Use the status control to move an alert through the <strong>Unread &rarr; Read &rarr; Dismissed</strong> workflow.</div>
+      </div>
+
+      <!-- Notifications Table (Status is the last column, no Action column) -->
+      <div class="table-card">
+        <div class="table-card-head">
+          <h3>Alert Log <span class="count">&middot; {{ notifications().length }} total</span></h3>
+        </div>
+        <div class="table-scroll">
+          <table class="table-fixed">
+            <thead>
+              <tr>
+                <th style="width:40%;">Alert</th>
+                <th style="width:18%;">Category</th>
+                <th style="width:24%;">Logged Date</th>
+                <th style="width:18%;">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let n of notifications()">
+                <td class="name-cell">{{ n.message }}</td>
+                <td><span class="tag">{{ n.category }}</span></td>
+                <td class="mono">{{ n.createdDate | date:'medium' }}</td>
+                <td>
+                  <!-- Cyclical Status Action button: Unread -> Read -> Dismissed -->
+                  <button type="button" class="status-toggle badge-status"
+                    [class.badge-unread]="n.status === 'Unread'"
+                    [class.badge-read]="n.status === 'Read'"
+                    [class.badge-dismissed]="n.status === 'Dismissed'"
+                    (click)="cycleNotificationStatus(n)">
+                    {{ n.status }}
+                  </button>
+                </td>
+              </tr>
+              <tr *ngIf="notifications().length === 0">
+                <td colspan="4" class="empty-state">No notifications registered for your profile.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   `,
   styles: [`
-    .notifications-container {
-      background: #ffffff;
-      border: 1px solid #ece4dc;
-      border-radius: 14px;
-      padding: 32px;
-    }
-    .panel-header {
-      margin-bottom: 24px;
-      text-align: left;
-    }
-    .panel-header h2 {
-      font-family: 'Manrope', sans-serif;
-      font-size: 24px;
-      font-weight: 800;
-      color: #211611;
-      margin: 0 0 6px;
-    }
-    .panel-header p {
-      color: #7a6a5e;
-      font-size: 14px;
-      margin: 0;
-    }
-    .table-container {
-      overflow-x: auto;
-      border: 1px solid #ece4dc;
-      border-radius: 10px;
-    }
-    .data-table {
-      width: 100%;
-      border-collapse: collapse;
-      text-align: left;
-      font-size: 14px;
-    }
-    .data-table th {
-      background: #f7f5f2;
-      color: #211611;
-      font-weight: 700;
-      padding: 14px 16px;
-      border-bottom: 1px solid #ece4dc;
-    }
-    .data-table td {
-      padding: 14px 16px;
-      border-bottom: 1px solid #ece4dc;
-      color: #211611;
-      vertical-align: middle;
-    }
-    .role-pill {
-      background: #fbe9de;
-      color: #CE5200;
-      padding: 3px 8px;
-      border-radius: 4px;
-      font-weight: 600;
-      font-size: 12px;
-    }
-    .cycle-status-btn {
-      width: 100%;
-      padding: 8px 12px;
-      border-radius: 6px;
-      border: 1px solid transparent;
-      font-size: 12.5px;
-      font-weight: 700;
+    :host { display: block; }
+
+    /* Status toggle button styled as a clickable badge (Unread / Read / Dismissed) */
+    .status-toggle {
       cursor: pointer;
-      text-transform: uppercase;
-      transition: background 0.15s ease, border-color 0.15s ease;
-      text-align: center;
+      font-family: inherit;
+      border: 1px solid transparent;
+      transition: filter .15s ease, background .15s ease;
     }
-    .status-unread {
-      background: #fff8e1;
-      color: #f57f17;
-      border-color: #ffe082;
-    }
-    .status-unread:hover {
-      background: #f57f17;
-      color: #ffffff;
-    }
-    .status-read {
-      background: #e8f5e9;
-      color: #2e7d32;
-      border-color: #c8e6c9;
-    }
-    .status-read:hover {
-      background: #2e7d32;
-      color: #ffffff;
-    }
-    .status-dismissed {
-      background: #f7f5f2;
-      color: #7a6a5e;
-      border-color: #ece4dc;
-    }
-    .status-dismissed:hover {
-      background: #7a6a5e;
-      color: #ffffff;
-    }
+    .status-toggle:hover { filter: brightness(0.96); }
+    .status-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+    /* Notification-specific badge colors (replicated from the design reference) */
+    .badge-unread { background: var(--warning-light); color: var(--warning); }
+    .badge-read { background: var(--blue-light); color: var(--blue); }
+    .badge-dismissed { background: #eef0ef; color: #3c463f; }
+
+    /* Inline alert feedback (component-specific) */
     .alert {
-      padding: 10px 14px;
-      border-radius: 8px;
+      padding: 12px 16px;
+      border-radius: var(--radius-md);
       margin-bottom: 20px;
       font-size: 13.5px;
     }
     .alert-error {
-      background: #fbeceb;
-      color: #b3261e;
+      background: var(--danger-light);
+      color: var(--danger);
       border: 1px solid #f5c2c0;
     }
     .alert-success {
@@ -166,9 +100,9 @@ import { ApiService } from '../../services/api.service';
     }
     .empty-state {
       text-align: center;
-      color: #7a6a5e;
+      color: var(--text-dim);
       font-style: italic;
-      padding: 24px !important;
+      padding: 28px !important;
     }
   `]
 })
