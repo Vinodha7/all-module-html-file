@@ -1,0 +1,67 @@
+server:
+  port: 8085
+spring:
+  application:
+    name: supplychain-service
+  datasource:
+    url: jdbc:mysql://localhost:3306/pharmatrack_supplychain?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=Asia/Kolkata
+    username: root
+    password: root
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    database-platform: org.hibernate.dialect.MySQLDialect
+    hibernate:
+      ddl-auto: update
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+    show-sql: false
+    open-in-view: false
+jwt:
+  secret: PharmaTrackSecretKey_MinimumThirtyTwoChars!
+  expiration: 1800000
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    prefer-ip-address: false
+    hostname: localhost
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
+logging:
+  level:
+    root: INFO
+    org.springframework: INFO
+    com.cts.pharmatrack: DEBUG
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+# Feature flags (Wave 0 — inert; no code consumes these yet). Safe defaults.
+pharmatrack:
+  features:
+    audit-central-enabled: true
+    audit-local-fallback-enabled: true
+    signature-v2-enabled: false
+    # Wave 4: enforce controlled approval workflows + lifecycle history.
+    workflow-enabled: true
+  # Central Audit Service client (Wave 2). Used only when audit-central-enabled=true;
+  # publishing forwards the caller's JWT plus the shared X-Internal-Token.
+  audit:
+    internal-token: ${AUDIT_INTERNAL_TOKEN:local-dev-internal-token-change-me}
+    central:
+      base-url: ${AUDIT_SERVICE_URL:http://localhost:8089}
+  # IAM base URL (Wave 4) — workflow SignatureGate verifies signatures here.
+  iam:
+    base-url: ${IAM_SERVICE_URL:http://localhost:8081}
+
+
+

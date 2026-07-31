@@ -1,0 +1,62 @@
+server:
+  port: 8089
+spring:
+  application:
+    name: audit-service
+  datasource:
+    url: jdbc:mysql://localhost:3306/pharmatrack_audit?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=Asia/Kolkata
+    username: root
+    password: root
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    database-platform: org.hibernate.dialect.MySQLDialect
+    hibernate:
+      ddl-auto: update
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+    show-sql: false
+    open-in-view: false
+jwt:
+  secret: PharmaTrackSecretKey_MinimumThirtyTwoChars!
+  expiration: 1800000
+
+# Audit Service configuration.
+# Secrets are injected from the environment (no in-file defaults) so the service
+# fails fast if they are not provisioned once a bean binds them (A9 / A14).
+pharmatrack:
+  audit:
+    hmac-key: ${AUDIT_HMAC_KEY}
+    internal-token: ${AUDIT_INTERNAL_TOKEN}
+  # Feature flags. The Audit Service must NOT self-audit: the shared AuditAspect
+  # is disabled here by turning BOTH flags off (central off -> no publish to
+  # itself; local fallback off -> no local audit_log write). Resolves Wave 1 R1.
+  features:
+    audit-central-enabled: false
+    audit-local-fallback-enabled: false
+    signature-v2-enabled: false
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    prefer-ip-address: false
+    hostname: localhost
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
+logging:
+  level:
+    root: INFO
+    org.springframework: INFO
+    com.cts.pharmatrack: DEBUG
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html

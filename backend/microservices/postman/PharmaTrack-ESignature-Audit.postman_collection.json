@@ -1,0 +1,431 @@
+{
+  "info": {
+    "name": "PharmaTrack — E-Signatures & Audit (Non-IAM Modules)",
+    "description": "End-to-end tests for Wave 3/3.1 electronic signatures and Wave 4 signature-gated workflow transitions + Wave 2 central audit, for the business modules OTHER than IAM (Clinical Trial, Subject Enrolment, Batch, Deviation/CAPA, Regulatory, Supply Chain).\n\nSignatures are always CREATED in IAM (POST /signatures). Each module's service serves the generic /workflow API and calls IAM to verify the signature before allowing a gated transition (fail-closed). Every committed transition emits a CentralAuditEvent to the audit-service (8089).\n\nRun order per module folder: Login as the right role -> check status -> attempt gated transition WITHOUT signature (expect 403) -> sign in IAM -> verify -> retry transition (expect 200) -> read history -> query audit.\n\nPREREQS: MySQL 3306 (root/root), Eureka 8761, IAM 8081 (signature-v2-enabled=true), the module's service (workflow-enabled=true), audit-service 8089. Create the business-role users once (Setup folder). Set the *_id variables to REAL record ids that are in the correct starting status.\n\nRESPONSE SHAPE: all POST responses are message-only ({success/status, message}) with no 'data' field, by global policy. The ONLY exceptions are POST /auth/login and POST /auth/refresh, which still return the JWT in 'data'. GET responses (status, history, verifySignatures, audit queries) are unchanged and still carry 'data'.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "iam", "value": "http://localhost:8081" },
+    { "key": "audit", "value": "http://localhost:8089" },
+    { "key": "gateway", "value": "http://localhost:8090" },
+    { "key": "ct", "value": "http://localhost:8082", "description": "clinicaltrial-service" },
+    { "key": "se", "value": "http://localhost:8083", "description": "subjectenrolment-service" },
+    { "key": "batch", "value": "http://localhost:8084", "description": "batch-service" },
+    { "key": "sc", "value": "http://localhost:8085", "description": "supplychain-service" },
+    { "key": "dc", "value": "http://localhost:8086", "description": "deviationcapa-service" },
+    { "key": "reg", "value": "http://localhost:8087", "description": "regulatory-service" },
+    { "key": "adminToken", "value": "" },
+    { "key": "token", "value": "" },
+    { "key": "signatureId", "value": "" },
+    { "key": "eventId", "value": "" },
+    { "key": "admin_email", "value": "admin@pharma.com" },
+    { "key": "admin_pwd", "value": "Admin@123" },
+    { "key": "pwd", "value": "Pass@123" },
+    { "key": "inv_email", "value": "investigator@pharma.com" },
+    { "key": "res_email", "value": "researcher@pharma.com" },
+    { "key": "qa_email", "value": "qaanalyst@pharma.com" },
+    { "key": "mfg_email", "value": "mfgsupervisor@pharma.com" },
+    { "key": "reg_email", "value": "regofficer@pharma.com" },
+    { "key": "scuser_email", "value": "supplychain@pharma.com" },
+    { "key": "ct_protocol_id", "value": "1", "description": "TrialProtocol id in Draft status" },
+    { "key": "ct_protocol_version", "value": "1", "description": "MUST equal the protocol's versionNumber (only entity whose version is checked)" },
+    { "key": "se_subject_id", "value": "1", "description": "TrialSubject id in Enrolled status" },
+    { "key": "batch_id", "value": "1", "description": "BatchRecord id in QCH status" },
+    { "key": "capa_id", "value": "1", "description": "CAPARecord id in OPN or INP status" },
+    { "key": "reg_dossier_id", "value": "1", "description": "RegulatoryDossier id in UnderReview status" },
+    { "key": "sc_shipment_id", "value": "1", "description": "DrugShipment id in Dispatched status" }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [ { "key": "token", "value": "{{token}}", "type": "string" } ]
+  },
+  "item": [
+    {
+      "name": "0. Setup & Auth (run once)",
+      "item": [
+        {
+          "name": "Login as Admin",
+          "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('200', () => pm.response.to.have.status(200));",
+            "var d = pm.response.json().data;",
+            "pm.collectionVariables.set('adminToken', d.token);",
+            "pm.collectionVariables.set('token', d.token);",
+            "console.log('admin role=', d.role, 'userId=', d.userId);"
+          ] } } ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{admin_email}}\",\n  \"password\": \"{{admin_pwd}}\"\n}" },
+            "url": { "raw": "{{iam}}/pharmaTrack/identityAccess/auth/login", "host": [ "{{iam}}" ], "path": [ "pharmaTrack", "identityAccess", "auth", "login" ] },
+            "description": "Seeded admin: admin@pharma.com / Admin@123 (AdminBootstrap). Saves {{adminToken}}."
+          }
+        },
+        {
+          "name": "Fetch Roles (capture roleId_*)",
+          "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('200', () => pm.response.to.have.status(200));",
+            "var roles = pm.response.json().data || [];",
+            "roles.forEach(function(r){ pm.collectionVariables.set('roleId_' + r.roleName, r.roleId); });",
+            "console.log('roles=', roles.map(r => r.roleName + '=' + r.roleId).join(', '));"
+          ] } } ],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "{{adminToken}}", "type": "string" } ] },
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{iam}}/pharmaTrack/identityAccess/fetchRoles", "host": [ "{{iam}}" ], "path": [ "pharmaTrack", "identityAccess", "fetchRoles" ] },
+            "description": "Stores each role's id as {{roleId_<RoleName>}} for the Create User requests below. If a business role is missing, run 'Create Role' first, then re-run this."
+          }
+        },
+        {
+          "name": "Create Role (template)",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "{{adminToken}}", "type": "string" } ] },
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"roleName\": \"Investigator\"\n}" },
+            "url": { "raw": "{{iam}}/pharmaTrack/identityAccess/createRole", "host": [ "{{iam}}" ], "path": [ "pharmaTrack", "identityAccess", "createRole" ] },
+            "description": "Create any business role that fetchRoles didn't return. Valid role names: Investigator, Researcher, QAAnalyst, MfgSupervisor, RegulatoryOfficer, SupplyChain. (If your CreateRoleRequest also expects permission ids, add them here.)"
+          }
+        },
+        {
+          "name": "Create User (template)",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "{{adminToken}}", "type": "string" } ] },
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Test Investigator\",\n  \"roleId\": {{roleId_Investigator}},\n  \"email\": \"{{inv_email}}\",\n  \"phone\": \"9000000001\",\n  \"siteId\": 1,\n  \"password\": \"{{pwd}}\"\n}" },
+            "url": { "raw": "{{iam}}/pharmaTrack/identityAccess/createUser", "host": [ "{{iam}}" ], "path": [ "pharmaTrack", "identityAccess", "createUser" ] },
+            "description": "Duplicate this once per role you need, swapping roleId + email:\n- Investigator  -> {{inv_email}}\n- Researcher    -> {{res_email}}\n- QAAnalyst     -> {{qa_email}}\n- MfgSupervisor -> {{mfg_email}}\n- RegulatoryOfficer -> {{reg_email}}\n- SupplyChain   -> {{scuser_email}}\nAll use password {{pwd}}."
+          }
+        }
+      ],
+      "description": "Provision the business-role users once. Admin is auto-seeded; the rest are created here."
+    },
+
+    {
+      "name": "1. Clinical Trial (8082) — TrialProtocol APPROVE [signed]",
+      "item": [
+        {
+          "name": "Login as Investigator",
+          "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('200', () => pm.response.to.have.status(200));",
+            "pm.collectionVariables.set('token', pm.response.json().data.token);"
+          ] } } ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{inv_email}}\",\n  \"password\": \"{{pwd}}\"\n}" },
+            "url": { "raw": "{{iam}}/pharmaTrack/identityAccess/auth/login", "host": [ "{{iam}}" ], "path": [ "pharmaTrack", "identityAccess", "auth", "login" ] }
+          }
+        },
+        {
+          "name": "Workflow status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{ct}}/workflow/status/TrialProtocol/{{ct_protocol_id}}", "host": [ "{{ct}}" ], "path": [ "workflow", "status", "TrialProtocol", "{{ct_protocol_id}}" ] },
+            "description": "Expect current status = Draft."
+          }
+        },
+        {
+          "name": "Transition Draft->Approved WITHOUT signature (expect 403)",
+          "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('403 - gated, no signature yet', () => pm.expect(pm.response.code).to.eql(403));"
+          ] } } ],
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"entityType\": \"TrialProtocol\",\n  \"entityId\": \"{{ct_protocol_id}}\",\n  \"targetStatus\": \"Approved\",\n  \"reason\": \"Approve protocol (should fail without signature)\"\n}" },
+            "url": { "raw": "{{ct}}/workflow/transition", "host": [ "{{ct}}" ], "path": [ "workflow", "transition" ] }
+          }
+        },
+        {
+          "name": "Sign TrialProtocol APPROVED (IAM)",
+          "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('200 signed', () => pm.response.to.have.status(200));",
+            "pm.test('POST body is message-only (no data)', () => pm.expect(pm.response.json().data).to.be.undefined);"
+          ] } } ],
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"entityType\": \"TrialProtocol\",\n  \"entityId\": \"{{ct_protocol_id}}\",\n  \"entityVersion\": \"{{ct_protocol_version}}\",\n  \"meaning\": \"APPROVED\"\n}" },
+            "url": { "raw": "{{iam}}/pharmaTrack/identityAccess/signatures", "host": [ "{{iam}}" ], "path": [ "pharmaTrack", "identityAccess", "signatures" ] },
+            "description": "Investigator may sign TrialProtocol with APPROVED (Wave 3.1 matrix). entityVersion MUST equal the protocol's versionNumber — this is the ONE entity where the gate checks version."
+          }
+        },
+        {
+          "name": "Verify signatures (IAM)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{iam}}/pharmaTrack/identityAccess/verifySignatures?entityType=TrialProtocol&entityId={{ct_protocol_id}}", "host": [ "{{iam}}" ], "path": [ "pharmaTrack", "identityAccess", "verifySignatures" ], "query": [ { "key": "entityType", "value": "TrialProtocol" }, { "key": "entityId", "value": "{{ct_protocol_id}}" } ] },
+            "description": "data.signatures[] should include the APPROVED signature with valid=true."
+          }
+        },
+        {
+          "name": "Transition Draft->Approved WITH signature (expect 200)",
+          "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('200 - transition committed', () => pm.response.to.have.status(200));",
+            "pm.test('POST body is message-only (no data)', () => pm.expect(pm.response.json().data).to.be.undefined);",
+            "console.log('message=', pm.response.json().message);"
+          ] } } ],
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"entityType\": \"TrialProtocol\",\n  \"entityId\": \"{{ct_protocol_id}}\",\n  \"targetStatus\": \"Approved\",\n  \"reason\": \"Approve protocol after signing\"\n}" },
+            "url": { "raw": "{{ct}}/workflow/transition", "host": [ "{{ct}}" ], "path": [ "workflow", "transition" ] }
+          }
+        },
+        {
+          "name": "Workflow history",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{ct}}/workflow/history/TrialProtocol/{{ct_protocol_id}}", "host": [ "{{ct}}" ], "path": [ "workflow", "history", "TrialProtocol", "{{ct_protocol_id}}" ] }
+          }
+        },
+        {
+          "name": "Audit: find APPROVE event (audit-service)",
+          "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('200', () => pm.response.to.have.status(200));",
+            "var c = pm.response.json().data.content || [];",
+            "if (c.length) pm.collectionVariables.set('eventId', c[0].eventId);",
+            "console.log('events=', c.length);"
+          ] } } ],
+          "request": {
+            "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "{{adminToken}}", "type": "string" } ] },
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{audit}}/pharmaTrack/audit/events?module=ClinicalTrial&action=APPROVE&entityType=TrialProtocol&entityId={{ct_protocol_id}}", "host": [ "{{audit}}" ], "path": [ "pharmaTrack", "audit", "events" ], "query": [ { "key": "module", "value": "ClinicalTrial" }, { "key": "action", "value": "APPROVE" }, { "key": "entityType", "value": "TrialProtocol" }, { "key": "entityId", "value": "{{ct_protocol_id}}" } ] },
+            "description": "Uses Admin token (sees all modules). Confirms the transition emitted a CentralAuditEvent with action=APPROVE."
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "2. Subject Enrolment (8083) — TrialSubject REVIEW [signed]",
+      "item": [
+        {
+          "name": "Login as Investigator",
+          "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [ "pm.collectionVariables.set('token', pm.response.json().data.token);" ] } } ],
+          "request": { "auth": { "type": "noauth" }, "method": "POST", "header": [ { "key": "Content-Type", "value": "application/json" } ], "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{inv_email}}\",\n  \"password\": \"{{pwd}}\"\n}" }, "url": { "raw": "{{iam}}/pharmaTrack/identityAccess/auth/login", "host": [ "{{iam}}" ], "path": [ "pharmaTrack", "identityAccess", "auth", "login" ] } }
+        },
+        {
+          "name": "Workflow status",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{se}}/workflow/status/TrialSubject/{{se_subject_id}}", "host": [ "{{se}}" ], "path": [ "workflow", "status", "TrialSubject", "{{se_subject_id}}" ] }, "description": "Expect Enrolled." }
+        },
+        {
+          "name": "Transition Enrolled->Reviewed WITHOUT signature (expect 403)",
+          "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [ "pm.test('403', () => pm.expect(pm.response.code).to.eql(403));" ] } } ],
+          "request": { "method": "POST", "header": [ { "key": "Content-Type", "value": "application/json" } ], "body": { "mode": "raw", "raw": "{\n  \"entityType\": \"TrialSubject\",\n  \"entityId\": \"{{se_subject_id}}\",\n  \"targetStatus\": \"Reviewed\",\n  \"reason\": \"Review subject (no signature yet)\"\n}" }, "url": { "raw": "{{se}}/workflow/transition", "host": [ "{{se}}" ], "path": [ "workflow", "transition" ] } }
+        },
+        {
+          "name": "Sign TrialSubject REVIEWED (IAM)",
+          "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [ "pm.test('200', () => pm.response.to.have.status(200));", "pm.test('POST body is message-only (no data)', () => pm.expect(pm.response.json().data).to.be.undefined);" ] } } ],
+          "request": { "method": "POST", "header": [ { "key": "Content-Type", "value": "application/json" } ], "body": { "mode": "raw", "raw": "{\n  \"entityType\": \"TrialSubject\",\n  \"entityId\": \"{{se_subject_id}}\",\n  \"entityVersion\": \"1\",\n  \"meaning\": \"REVIEWED\"\n}" }, "url": { "raw": "{{iam}}/pharmaTrack/identityAccess/signatures", "host": [ "{{iam}}" ], "path": [ "pharmaTrack", "identityAccess", "signatures" ] }, "description": "Researcher or Investigator may sign TrialSubject with REVIEWED. Version not checked here (handler.currentVersion=null) so entityVersion is free." }
+        },
+        {
+          "name": "Verify signatures (IAM)",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{iam}}/pharmaTrack/identityAccess/verifySignatures?entityType=TrialSubject&entityId={{se_subject_id}}", "host": [ "{{iam}}" ], "path": [ "pharmaTrack", "identityAccess", "verifySignatures" ], "query": [ { "key": "entityType", "value": "TrialSubject" }, { "key": "entityId", "value": "{{se_subject_id}}" } ] } }
+        },
+        {
+          "name": "Transition Enrolled->Reviewed WITH signature (expect 200)",
+          "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [ "pm.test('200', () => pm.response.to.have.status(200));" ] } } ],
+          "request": { "method": "POST", "header": [ { "key": "Content-Type", "value": "application/json" } ], "body": { "mode": "raw", "raw": "{\n  \"entityType\": \"TrialSubject\",\n  \"entityId\": \"{{se_subject_id}}\",\n  \"targetStatus\": \"Reviewed\",\n  \"reason\": \"Review subject after signing\"\n}" }, "url": { "raw": "{{se}}/workflow/transition", "host": [ "{{se}}" ], "path": [ "workflow", "transition" ] } }
+        },
+        {
+          "name": "Workflow history",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{se}}/workflow/history/TrialSubject/{{se_subject_id}}", "host": [ "{{se}}" ], "path": [ "workflow", "history", "TrialSubject", "{{se_subject_id}}" ] } }
+        },
+        {
+          "name": "Audit: find REVIEW event",
+          "request": { "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "{{adminToken}}", "type": "string" } ] }, "method": "GET", "header": [], "url": { "raw": "{{audit}}/pharmaTrack/audit/events?module=SubjectEnrollment&action=REVIEW&entityType=TrialSubject&entityId={{se_subject_id}}", "host": [ "{{audit}}" ], "path": [ "pharmaTrack", "audit", "events" ], "query": [ { "key": "module", "value": "SubjectEnrollment" }, { "key": "action", "value": "REVIEW" }, { "key": "entityType", "value": "TrialSubject" }, { "key": "entityId", "value": "{{se_subject_id}}" } ] } }
+        }
+      ]
+    },
+
+    {
+      "name": "3. Batch (8084) — BatchRecord RELEASE [signed]",
+      "item": [
+        {
+          "name": "Login as QAAnalyst",
+          "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [ "pm.collectionVariables.set('token', pm.response.json().data.token);" ] } } ],
+          "request": { "auth": { "type": "noauth" }, "method": "POST", "header": [ { "key": "Content-Type", "value": "application/json" } ], "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{qa_email}}\",\n  \"password\": \"{{pwd}}\"\n}" }, "url": { "raw": "{{iam}}/pharmaTrack/identityAccess/auth/login", "host": [ "{{iam}}" ], "path": [ "pharmaTrack", "identityAccess", "auth", "login" ] } }
+        },
+        {
+          "name": "Workflow status",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{batch}}/workflow/status/BatchRecord/{{batch_id}}", "host": [ "{{batch}}" ], "path": [ "workflow", "status", "BatchRecord", "{{batch_id}}" ] }, "description": "Expect QCH (QC-Hold)." }
+        },
+        {
+          "name": "Transition QCH->REL WITHOUT signature (expect 403)",
+          "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [ "pm.test('403', () => pm.expect(pm.response.code).to.eql(403));" ] } } ],
+          "request": { "method": "POST", "header": [ { "key": "Content-Type", "value": "application/json" } ], "body": { "mode": "raw", "raw": "{\n  \"entityType\": \"BatchRecord\",\n  \"entityId\": \"{{batch_id}}\",\n  \"targetStatus\": \"REL\",\n  \"reason\": \"Release batch (no signature yet)\"\n}" }, "url": { "raw": "{{batch}}/workflow/transition", "host": [ "{{batch}}" ], "path": [ "workflow", "transition" ] } }
+        },
+        {
+          "name": "Sign BatchRecord RELEASED (IAM)",
+          "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [ "pm.test('200', () => pm.response.to.have.status(200));", "pm.test('POST body is message-only (no data)', () => pm.expect(pm.response.json().data).to.be.undefined);" ] } } ],
+          "request": { "method": "POST", "header": [ { "key": "Content-Type", "value": "application/json" } ], "body": { "mode": "raw", "raw": "{\n  \"entityType\": \"BatchRecord\",\n  \"entityId\": \"{{batch_id}}\",\n  \"entityVersion\": \"1\",\n  \"meaning\": \"RELEASED\"\n}" }, "url": { "raw": "{{iam}}/pharmaTrack/identityAccess/signatures", "host": [ "{{iam}}" ], "path": [ "pharmaTrack", "identityAccess", "signatures" ] }, "description": "QAAnalyst may sign BatchRecord with RELEASED (Wave 3.1 matrix)." }
+        },
+        {
+          "name": "Verify signatures (IAM)",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{iam}}/pharmaTrack/identityAccess/verifySignatures?entityType=BatchRecord&entityId={{batch_id}}", "host": [ "{{iam}}" ], "path": [ "pharmaTrack", "identityAccess", "verifySignatures" ], "query": [ { "key": "entityType", "value": "BatchRecord" }, { "key": "entityId", "value": "{{batch_id}}" } ] } }
+        },
+        {
+          "name": "Transition QCH->REL WITH signature (expect 200)",
+          "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [ "pm.test('200', () => pm.response.to.have.status(200));" ] } } ],
+          "request": { "method": "POST", "header": [ { "key": "Content-Type", "value": "application/json" } ], "body": { "mode": "raw", "raw": "{\n  \"entityType\": \"BatchRecord\",\n  \"entityId\": \"{{batch_id}}\",\n  \"targetStatus\": \"REL\",\n  \"reason\": \"Release batch after signing\"\n}" }, "url": { "raw": "{{batch}}/workflow/transition", "host": [ "{{batch}}" ], "path": [ "workflow", "transition" ] } }
+        },
+        {
+          "name": "Workflow history",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{batch}}/workflow/history/BatchRecord/{{batch_id}}", "host": [ "{{batch}}" ], "path": [ "workflow", "history", "BatchRecord", "{{batch_id}}" ] } }
+        },
+        {
+          "name": "Audit: find RELEASE event",
+          "request": { "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "{{adminToken}}", "type": "string" } ] }, "method": "GET", "header": [], "url": { "raw": "{{audit}}/pharmaTrack/audit/events?module=BatchManufacturing&action=RELEASE&entityType=BatchRecord&entityId={{batch_id}}", "host": [ "{{audit}}" ], "path": [ "pharmaTrack", "audit", "events" ], "query": [ { "key": "module", "value": "BatchManufacturing" }, { "key": "action", "value": "RELEASE" }, { "key": "entityType", "value": "BatchRecord" }, { "key": "entityId", "value": "{{batch_id}}" } ] } }
+        }
+      ]
+    },
+
+    {
+      "name": "4. Deviation & CAPA (8086) — CAPARecord CLOSE [signed]",
+      "item": [
+        {
+          "name": "Login as QAAnalyst",
+          "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [ "pm.collectionVariables.set('token', pm.response.json().data.token);" ] } } ],
+          "request": { "auth": { "type": "noauth" }, "method": "POST", "header": [ { "key": "Content-Type", "value": "application/json" } ], "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{qa_email}}\",\n  \"password\": \"{{pwd}}\"\n}" }, "url": { "raw": "{{iam}}/pharmaTrack/identityAccess/auth/login", "host": [ "{{iam}}" ], "path": [ "pharmaTrack", "identityAccess", "auth", "login" ] } }
+        },
+        {
+          "name": "Workflow status",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{dc}}/workflow/status/CAPARecord/{{capa_id}}", "host": [ "{{dc}}" ], "path": [ "workflow", "status", "CAPARecord", "{{capa_id}}" ] }, "description": "Expect OPN or INP." }
+        },
+        {
+          "name": "Transition ->CLS WITHOUT signature (expect 403)",
+          "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [ "pm.test('403', () => pm.expect(pm.response.code).to.eql(403));" ] } } ],
+          "request": { "method": "POST", "header": [ { "key": "Content-Type", "value": "application/json" } ], "body": { "mode": "raw", "raw": "{\n  \"entityType\": \"CAPARecord\",\n  \"entityId\": \"{{capa_id}}\",\n  \"targetStatus\": \"CLS\",\n  \"reason\": \"Close CAPA (no signature yet)\"\n}" }, "url": { "raw": "{{dc}}/workflow/transition", "host": [ "{{dc}}" ], "path": [ "workflow", "transition" ] } }
+        },
+        {
+          "name": "Sign CAPARecord APPROVED (IAM)",
+          "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [ "pm.test('200', () => pm.response.to.have.status(200));", "pm.test('POST body is message-only (no data)', () => pm.expect(pm.response.json().data).to.be.undefined);" ] } } ],
+          "request": { "method": "POST", "header": [ { "key": "Content-Type", "value": "application/json" } ], "body": { "mode": "raw", "raw": "{\n  \"entityType\": \"CAPARecord\",\n  \"entityId\": \"{{capa_id}}\",\n  \"entityVersion\": \"1\",\n  \"meaning\": \"APPROVED\"\n}" }, "url": { "raw": "{{iam}}/pharmaTrack/identityAccess/signatures", "host": [ "{{iam}}" ], "path": [ "pharmaTrack", "identityAccess", "signatures" ] }, "description": "QAAnalyst may sign CAPARecord with APPROVED. The CLOSE transition is gated on the APPROVED meaning." }
+        },
+        {
+          "name": "Verify signatures (IAM)",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{iam}}/pharmaTrack/identityAccess/verifySignatures?entityType=CAPARecord&entityId={{capa_id}}", "host": [ "{{iam}}" ], "path": [ "pharmaTrack", "identityAccess", "verifySignatures" ], "query": [ { "key": "entityType", "value": "CAPARecord" }, { "key": "entityId", "value": "{{capa_id}}" } ] } }
+        },
+        {
+          "name": "Transition ->CLS WITH signature (expect 200)",
+          "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [ "pm.test('200', () => pm.response.to.have.status(200));" ] } } ],
+          "request": { "method": "POST", "header": [ { "key": "Content-Type", "value": "application/json" } ], "body": { "mode": "raw", "raw": "{\n  \"entityType\": \"CAPARecord\",\n  \"entityId\": \"{{capa_id}}\",\n  \"targetStatus\": \"CLS\",\n  \"reason\": \"Close CAPA after signing\"\n}" }, "url": { "raw": "{{dc}}/workflow/transition", "host": [ "{{dc}}" ], "path": [ "workflow", "transition" ] } }
+        },
+        {
+          "name": "Workflow history",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{dc}}/workflow/history/CAPARecord/{{capa_id}}", "host": [ "{{dc}}" ], "path": [ "workflow", "history", "CAPARecord", "{{capa_id}}" ] } }
+        },
+        {
+          "name": "Audit: find CLOSE event",
+          "request": { "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "{{adminToken}}", "type": "string" } ] }, "method": "GET", "header": [], "url": { "raw": "{{audit}}/pharmaTrack/audit/events?module=DeviationCAPA&action=CLOSE&entityType=CAPARecord&entityId={{capa_id}}", "host": [ "{{audit}}" ], "path": [ "pharmaTrack", "audit", "events" ], "query": [ { "key": "module", "value": "DeviationCAPA" }, { "key": "action", "value": "CLOSE" }, { "key": "entityType", "value": "CAPARecord" }, { "key": "entityId", "value": "{{capa_id}}" } ] } }
+        }
+      ]
+    },
+
+    {
+      "name": "5. Regulatory (8087) — RegulatoryDossier APPROVE [signed]",
+      "item": [
+        {
+          "name": "Login as RegulatoryOfficer",
+          "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [ "pm.collectionVariables.set('token', pm.response.json().data.token);" ] } } ],
+          "request": { "auth": { "type": "noauth" }, "method": "POST", "header": [ { "key": "Content-Type", "value": "application/json" } ], "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{reg_email}}\",\n  \"password\": \"{{pwd}}\"\n}" }, "url": { "raw": "{{iam}}/pharmaTrack/identityAccess/auth/login", "host": [ "{{iam}}" ], "path": [ "pharmaTrack", "identityAccess", "auth", "login" ] } }
+        },
+        {
+          "name": "Workflow status",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{reg}}/workflow/status/RegulatoryDossier/{{reg_dossier_id}}", "host": [ "{{reg}}" ], "path": [ "workflow", "status", "RegulatoryDossier", "{{reg_dossier_id}}" ] }, "description": "Expect UnderReview." }
+        },
+        {
+          "name": "Transition UnderReview->Approved WITHOUT signature (expect 403)",
+          "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [ "pm.test('403', () => pm.expect(pm.response.code).to.eql(403));" ] } } ],
+          "request": { "method": "POST", "header": [ { "key": "Content-Type", "value": "application/json" } ], "body": { "mode": "raw", "raw": "{\n  \"entityType\": \"RegulatoryDossier\",\n  \"entityId\": \"{{reg_dossier_id}}\",\n  \"targetStatus\": \"Approved\",\n  \"reason\": \"Approve dossier (no signature yet)\"\n}" }, "url": { "raw": "{{reg}}/workflow/transition", "host": [ "{{reg}}" ], "path": [ "workflow", "transition" ] } }
+        },
+        {
+          "name": "Sign RegulatoryDossier APPROVED (IAM)",
+          "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [ "pm.test('200', () => pm.response.to.have.status(200));", "pm.test('POST body is message-only (no data)', () => pm.expect(pm.response.json().data).to.be.undefined);" ] } } ],
+          "request": { "method": "POST", "header": [ { "key": "Content-Type", "value": "application/json" } ], "body": { "mode": "raw", "raw": "{\n  \"entityType\": \"RegulatoryDossier\",\n  \"entityId\": \"{{reg_dossier_id}}\",\n  \"entityVersion\": \"1\",\n  \"meaning\": \"APPROVED\"\n}" }, "url": { "raw": "{{iam}}/pharmaTrack/identityAccess/signatures", "host": [ "{{iam}}" ], "path": [ "pharmaTrack", "identityAccess", "signatures" ] }, "description": "RegulatoryOfficer may sign RegulatoryDossier with APPROVED." }
+        },
+        {
+          "name": "Verify signatures (IAM)",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{iam}}/pharmaTrack/identityAccess/verifySignatures?entityType=RegulatoryDossier&entityId={{reg_dossier_id}}", "host": [ "{{iam}}" ], "path": [ "pharmaTrack", "identityAccess", "verifySignatures" ], "query": [ { "key": "entityType", "value": "RegulatoryDossier" }, { "key": "entityId", "value": "{{reg_dossier_id}}" } ] } }
+        },
+        {
+          "name": "Transition UnderReview->Approved WITH signature (expect 200)",
+          "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [ "pm.test('200', () => pm.response.to.have.status(200));" ] } } ],
+          "request": { "method": "POST", "header": [ { "key": "Content-Type", "value": "application/json" } ], "body": { "mode": "raw", "raw": "{\n  \"entityType\": \"RegulatoryDossier\",\n  \"entityId\": \"{{reg_dossier_id}}\",\n  \"targetStatus\": \"Approved\",\n  \"reason\": \"Approve dossier after signing\"\n}" }, "url": { "raw": "{{reg}}/workflow/transition", "host": [ "{{reg}}" ], "path": [ "workflow", "transition" ] } }
+        },
+        {
+          "name": "Workflow history",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{reg}}/workflow/history/RegulatoryDossier/{{reg_dossier_id}}", "host": [ "{{reg}}" ], "path": [ "workflow", "history", "RegulatoryDossier", "{{reg_dossier_id}}" ] } }
+        },
+        {
+          "name": "Audit: find APPROVE event",
+          "request": { "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "{{adminToken}}", "type": "string" } ] }, "method": "GET", "header": [], "url": { "raw": "{{audit}}/pharmaTrack/audit/events?module=RegulatoryAffairs&action=APPROVE&entityType=RegulatoryDossier&entityId={{reg_dossier_id}}", "host": [ "{{audit}}" ], "path": [ "pharmaTrack", "audit", "events" ], "query": [ { "key": "module", "value": "RegulatoryAffairs" }, { "key": "action", "value": "APPROVE" }, { "key": "entityType", "value": "RegulatoryDossier" }, { "key": "entityId", "value": "{{reg_dossier_id}}" } ] } }
+        }
+      ]
+    },
+
+    {
+      "name": "6. Supply Chain (8085) — DrugShipment SHIP [unsigned, audit only]",
+      "item": [
+        {
+          "name": "Login as SupplyChain",
+          "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [ "pm.collectionVariables.set('token', pm.response.json().data.token);" ] } } ],
+          "request": { "auth": { "type": "noauth" }, "method": "POST", "header": [ { "key": "Content-Type", "value": "application/json" } ], "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{scuser_email}}\",\n  \"password\": \"{{pwd}}\"\n}" }, "url": { "raw": "{{iam}}/pharmaTrack/identityAccess/auth/login", "host": [ "{{iam}}" ], "path": [ "pharmaTrack", "identityAccess", "auth", "login" ] } }
+        },
+        {
+          "name": "Workflow status",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{sc}}/workflow/status/DrugShipment/{{sc_shipment_id}}", "host": [ "{{sc}}" ], "path": [ "workflow", "status", "DrugShipment", "{{sc_shipment_id}}" ] }, "description": "Expect Dispatched. NOTE: Supply Chain transitions are NOT signature-gated, so this folder demonstrates audit integration on an UNSIGNED transition." }
+        },
+        {
+          "name": "Transition Dispatched->InTransit (expect 200, no signature needed)",
+          "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [ "pm.test('200', () => pm.response.to.have.status(200));" ] } } ],
+          "request": { "method": "POST", "header": [ { "key": "Content-Type", "value": "application/json" } ], "body": { "mode": "raw", "raw": "{\n  \"entityType\": \"DrugShipment\",\n  \"entityId\": \"{{sc_shipment_id}}\",\n  \"targetStatus\": \"InTransit\",\n  \"reason\": \"Ship consignment\"\n}" }, "url": { "raw": "{{sc}}/workflow/transition", "host": [ "{{sc}}" ], "path": [ "workflow", "transition" ] } }
+        },
+        {
+          "name": "Workflow history",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{sc}}/workflow/history/DrugShipment/{{sc_shipment_id}}", "host": [ "{{sc}}" ], "path": [ "workflow", "history", "DrugShipment", "{{sc_shipment_id}}" ] } }
+        },
+        {
+          "name": "Audit: find SHIP event",
+          "request": { "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "{{adminToken}}", "type": "string" } ] }, "method": "GET", "header": [], "url": { "raw": "{{audit}}/pharmaTrack/audit/events?module=SupplyChain&action=SHIP&entityType=DrugShipment&entityId={{sc_shipment_id}}", "host": [ "{{audit}}" ], "path": [ "pharmaTrack", "audit", "events" ], "query": [ { "key": "module", "value": "SupplyChain" }, { "key": "action", "value": "SHIP" }, { "key": "entityType", "value": "DrugShipment" }, { "key": "entityId", "value": "{{sc_shipment_id}}" } ] } }
+        }
+      ]
+    },
+
+    {
+      "name": "7. Audit Service (8089) — cross-cutting queries",
+      "item": [
+        {
+          "name": "Search events (paged)",
+          "event": [ { "listen": "test", "script": { "type": "text/javascript", "exec": [ "pm.test('200', () => pm.response.to.have.status(200));", "var c = (pm.response.json().data || {}).content || [];", "if (c.length) pm.collectionVariables.set('eventId', c[0].eventId);" ] } } ],
+          "request": { "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "{{adminToken}}", "type": "string" } ] }, "method": "GET", "header": [], "url": { "raw": "{{audit}}/pharmaTrack/audit/events?page=0&size=20", "host": [ "{{audit}}" ], "path": [ "pharmaTrack", "audit", "events" ], "query": [ { "key": "page", "value": "0" }, { "key": "size", "value": "20" }, { "key": "module", "value": "BatchManufacturing", "disabled": true }, { "key": "action", "value": "RELEASE", "disabled": true }, { "key": "performedBy", "value": "", "disabled": true }, { "key": "from", "value": "2026-07-01T00:00:00", "disabled": true }, { "key": "to", "value": "2026-12-31T23:59:59", "disabled": true } ] }, "description": "Module-scoped by the caller's role; Admin/Auditor see all. Optional filters are disabled by default — enable as needed." }
+        },
+        {
+          "name": "Get event by id",
+          "request": { "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "{{adminToken}}", "type": "string" } ] }, "method": "GET", "header": [], "url": { "raw": "{{audit}}/pharmaTrack/audit/events/{{eventId}}", "host": [ "{{audit}}" ], "path": [ "pharmaTrack", "audit", "events", "{{eventId}}" ] } }
+        },
+        {
+          "name": "Summary (counts by module & action)",
+          "request": { "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "{{adminToken}}", "type": "string" } ] }, "method": "GET", "header": [], "url": { "raw": "{{audit}}/pharmaTrack/audit/summary", "host": [ "{{audit}}" ], "path": [ "pharmaTrack", "audit", "summary" ] } }
+        },
+        {
+          "name": "Verify integrity (HMAC recompute)",
+          "request": { "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "{{adminToken}}", "type": "string" } ] }, "method": "GET", "header": [], "url": { "raw": "{{audit}}/pharmaTrack/audit/verifyIntegrity", "host": [ "{{audit}}" ], "path": [ "pharmaTrack", "audit", "verifyIntegrity" ] }, "description": "Admin/Auditor only. Recomputes the keyed HMAC of every stored event and reports tamper status." }
+        },
+        {
+          "name": "Export events (PDF)",
+          "request": { "auth": { "type": "bearer", "bearer": [ { "key": "token", "value": "{{adminToken}}", "type": "string" } ] }, "method": "GET", "header": [], "url": { "raw": "{{audit}}/pharmaTrack/audit/events/export?format=pdf", "host": [ "{{audit}}" ], "path": [ "pharmaTrack", "audit", "events", "export" ], "query": [ { "key": "format", "value": "pdf", "description": "pdf | excel" } ] } }
+        }
+      ]
+    }
+  ]
+}

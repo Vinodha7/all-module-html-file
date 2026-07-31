@@ -1,0 +1,95 @@
+server:
+  port: 8081
+spring:
+  application:
+    name: iam-service
+  datasource:
+    url: jdbc:mysql://localhost:3306/pharmatrack_iam_ms?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Kolkata
+    username: root
+    password: root
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  # Run schema.sql on startup (ddl-auto is 'none', so Hibernate won't create tables).
+  # 'always' is required because MySQL is not an embedded DB. schema.sql uses
+  # CREATE TABLE IF NOT EXISTS, so this is safe to run on every boot.
+  sql:
+    init:
+      mode: always
+  jpa:
+    database-platform: org.hibernate.dialect.MySQLDialect
+    hibernate:
+      ddl-auto: none
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+    show-sql: false
+    open-in-view: false
+    defer-datasource-initialization: true
+jwt:
+  secret: PharmaTrackSecretKey_MinimumThirtyTwoChars!
+  expiration: 1800000
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    prefer-ip-address: false
+    hostname: localhost
+
+# Default (prod): never expose the reset token.
+app:
+  security:
+    expose-reset-token: false
+
+# Feature flags.
+pharmatrack:
+  features:
+    # R1 (Wave 2.1 rollout): IAM is the FIRST and ONLY service on central audit.
+    # All other producer services keep audit-central-enabled: false.
+    audit-central-enabled: true
+    audit-local-fallback-enabled: true
+    # Wave 3: entity-based electronic signatures on approval workflows are live.
+    signature-v2-enabled: true
+    # IAM-only: keep the legacy signAuditLog endpoint live during migration.
+    signature-legacy-enabled: true
+  # Central Audit Service client (Wave 2). Used only when audit-central-enabled=true;
+  # publishing forwards the caller's JWT plus the shared X-Internal-Token.
+  # The internal-token MUST equal the Audit Service's AUDIT_INTERNAL_TOKEN. In
+  # prod, set the env var in both processes (it overrides this default); the
+  # literal below is a local-dev fallback so IAM works without the env var and
+  # matches the value the Audit Service is run with locally.
+  audit:
+    internal-token: ${AUDIT_INTERNAL_TOKEN:local-dev-internal-token-change-me}
+    central:
+      base-url: ${AUDIT_SERVICE_URL:http://localhost:8089}
+
+---
+# Dev profile: return the password-reset token in the REQUEST response so the
+# forgot-password flow is testable without an email server. Activate with
+# --spring.profiles.active=dev. Never enable in prod.
+spring:
+  config:
+    activate:
+      on-profile: dev
+app:
+  security:
+    expose-reset-token: true
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
+logging:
+  level:
+    root: INFO
+    org.springframework: INFO
+    com.cts.pharmatrack: DEBUG
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+
+

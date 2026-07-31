@@ -1,0 +1,49 @@
+# ===== Maven / Java build output =====
+target/
+!.mvn/wrapper/maven-wrapper.jar
+*.class
+
+# ===== Logs =====
+*.log
+logs/
+
+# ===== Spring Boot / runtime =====
+*.pid
+*.h2.db
+*.mv.db
+*.trace.db
+
+# ===== IDE: IntelliJ =====
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+
+# ===== IDE: Eclipse =====
+.classpath
+.project
+.settings/
+bin/
+
+# ===== IDE: NetBeans =====
+nbproject/
+nbbuild/
+nbdist/
+
+# ===== OS junk =====
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ===== Env / secrets (do not commit credentials) =====
+*.env
+.env
+.env.local
+application-local.properties
+application-local.yml
+*.pem
+*.key
+
+# Stray debug output
+tempjavap.txt

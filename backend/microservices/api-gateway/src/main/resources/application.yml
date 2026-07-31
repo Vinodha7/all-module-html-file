@@ -1,0 +1,224 @@
+server:
+  port: 8090
+
+spring:
+  main:
+    web-application-type: reactive
+  application:
+    name: api-gateway
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+      - org.springframework.boot.autoconfigure.jdbc.DataSourceInitializationAutoConfiguration
+      - org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.jpa.JpaRepositoriesAutoConfiguration
+  cloud:
+    gateway:
+      server:
+        webflux:
+          default-filters:
+            - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials, RETAIN_UNIQUE
+          globalcors:
+            cors-configurations:
+              '[/**]':
+                allowedOrigins:
+                  - "http://localhost:4200"
+                allowedMethods:
+                  - GET
+                  - POST
+                  - PUT
+                  - PATCH
+                  - DELETE
+                  - OPTIONS
+                allowedHeaders:
+                  - "*"
+                exposedHeaders:
+                  - Authorization
+                allowCredentials: true
+          routes:
+            - id: iam-service
+              uri: lb://iam-service
+              predicates:
+                - Path=/pharmaTrack/identityAccess/**
+              filters:
+                - name: CircuitBreaker
+                  args:
+                    name: iamCircuitBreaker
+                    fallbackUri: forward:/fallback/iam
+            - id: clinicaltrial-service
+              uri: lb://clinicaltrial-service
+              predicates:
+                - Path=/pharmaTrack/clinicalTrial/**,/pharmaTrack/trialProtocol/**,/pharmaTrack/trialSite/**
+              filters:
+                - name: CircuitBreaker
+                  args:
+                    name: clinicalTrialCircuitBreaker
+                    fallbackUri: forward:/fallback/clinicalTrial
+            - id: subjectenrolment-service
+              uri: lb://subjectenrolment-service
+              predicates:
+                - Path=/pharmaTrack/subjectEnrolment/**
+              filters:
+                - name: CircuitBreaker
+                  args:
+                    name: subjectEnrolmentCircuitBreaker
+                    fallbackUri: forward:/fallback/subjectEnrolment
+            - id: batch-service
+              uri: lb://batch-service
+              predicates:
+                - Path=/pharmaTrack/batchManufacturing/**
+              filters:
+                - name: CircuitBreaker
+                  args:
+                    name: batchCircuitBreaker
+                    fallbackUri: forward:/fallback/batch
+            - id: supplychain-service
+              uri: lb://supplychain-service
+              predicates:
+                - Path=/pharmaTrack/supplyColdManagement/**
+              filters:
+                - name: CircuitBreaker
+                  args:
+                    name: supplyChainCircuitBreaker
+                    fallbackUri: forward:/fallback/supplyChain
+            - id: deviationcapa-service
+              uri: lb://deviationcapa-service
+              predicates:
+                - Path=/pharmaTrack/deviationCapa/**
+              filters:
+                - name: CircuitBreaker
+                  args:
+                    name: deviationCapaCircuitBreaker
+                    fallbackUri: forward:/fallback/deviationCapa
+            - id: regulatory-service
+              uri: lb://regulatory-service
+              predicates:
+                - Path=/pharmaTrack/regulatoryAffairs/**
+              filters:
+                - name: CircuitBreaker
+                  args:
+                    name: regulatoryCircuitBreaker
+                    fallbackUri: forward:/fallback/regulatory
+            - id: notification-service
+              uri: lb://notification-service
+              predicates:
+                - Path=/pharmaTrack/notifications/**
+              filters:
+                - name: CircuitBreaker
+                  args:
+                    name: notificationCircuitBreaker
+                    fallbackUri: forward:/fallback/notification
+            - id: audit-service
+              uri: lb://audit-service
+              predicates:
+                - Path=/pharmaTrack/audit/**
+              filters:
+                - name: CircuitBreaker
+                  args:
+                    name: auditCircuitBreaker
+                    fallbackUri: forward:/fallback/audit
+
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        failure-rate-threshold: 50
+        sliding-window-size: 20
+        minimum-number-of-calls: 5
+        permitted-number-of-calls-in-half-open-state: 3
+        wait-duration-in-open-state: 10s
+    instances:
+      iamCircuitBreaker:
+        base-config: default
+      clinicalTrialCircuitBreaker:
+        base-config: default
+      subjectEnrolmentCircuitBreaker:
+        base-config: default
+      batchCircuitBreaker:
+        base-config: default
+      supplyChainCircuitBreaker:
+        base-config: default
+      deviationCapaCircuitBreaker:
+        base-config: default
+      regulatoryCircuitBreaker:
+        base-config: default
+      notificationCircuitBreaker:
+        base-config: default
+      auditCircuitBreaker:
+        base-config: default
+  # Spring Cloud Gateway wraps each CircuitBreaker route with a Resilience4j
+  # TimeLimiter whose DEFAULT is 1s. Cold starts / first-call latency (JVM warmup,
+  # first DB hit, synchronous downstream calls) exceed 1s and are counted as
+  # failures -> the route falls through to its fallback even though the service is
+  # healthy. Raise the per-route timeout so only genuinely-stuck calls trip it.
+  timelimiter:
+    configs:
+      default:
+        timeout-duration: 5s
+        cancel-running-future: true
+    instances:
+      iamCircuitBreaker:
+        base-config: default
+      clinicalTrialCircuitBreaker:
+        base-config: default
+      subjectEnrolmentCircuitBreaker:
+        base-config: default
+      batchCircuitBreaker:
+        base-config: default
+      supplyChainCircuitBreaker:
+        base-config: default
+      deviationCapaCircuitBreaker:
+        base-config: default
+      regulatoryCircuitBreaker:
+        base-config: default
+      notificationCircuitBreaker:
+        base-config: default
+      auditCircuitBreaker:
+        base-config: default
+  ratelimiter:
+    instances:
+      global-rate-limiter:
+        limit-refresh-period: 60s
+        limit-for-period: 100
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    prometheus:
+      enabled: true
+    health:
+      show-details: always
+    gateway:
+      access: unrestricted
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    prefer-ip-address: false
+    hostname: localhost
+logging:
+  level:
+    root: INFO
+    org.springframework: INFO
+    com.cts.pharmatrack: DEBUG
+    # Gateway routing / discovery diagnostics
+    org.springframework.cloud.gateway: DEBUG
+    org.springframework.cloud.loadbalancer: DEBUG
+    com.netflix.discovery: DEBUG
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+
+

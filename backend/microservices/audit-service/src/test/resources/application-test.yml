@@ -1,0 +1,26 @@
+# Test profile for audit-service integration tests.
+# Uses a dedicated MySQL test schema (create-drop) and literal secrets so the
+# context starts without AUDIT_HMAC_KEY / AUDIT_INTERNAL_TOKEN env vars.
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/pharmatrack_audit_test?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=Asia/Kolkata
+    username: root
+    password: root
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    database-platform: org.hibernate.dialect.MySQLDialect
+    hibernate:
+      ddl-auto: create-drop
+    open-in-view: false
+  cloud:
+    discovery:
+      enabled: false
+eureka:
+  client:
+    enabled: false
+    register-with-eureka: false
+    fetch-registry: false
+pharmatrack:
+  audit:
+    hmac-key: test-hmac-key-0123456789ABCDEF
+    internal-token: test-internal-token

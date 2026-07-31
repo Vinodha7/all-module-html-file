@@ -1,0 +1,58 @@
+package com.cts.pharmaTrack.common.web;
+
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import org.slf4j.MDC;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
+import org.springframework.stereotype.Component;
+import org.springframework.web.filter.OncePerRequestFilter;
+
+import java.io.IOException;
+import java.util.UUID;
+
+/**
+ * Ensures every request carries a correlation id for end-to-end traceability.
+ *
+ * <p>Reads the {@code X-Correlation-Id} request header (generating a UUID when
+ * absent or blank), publishes it to the SLF4J {@link MDC} under
+ * {@code correlationId}, and echoes it on the response. The MDC entry is always
+ * cleared in a {@code finally} block so the value never leaks across pooled
+ * request threads.
+ *
+ * <p>Introduced in Wave 0 (T6). It runs on every servlet-based microservice that
+ * depends on {@code pharmatrack-common} (the reactive API gateway has its own
+ * filter). Ordered at highest precedence so the id is available for the entire
+ * request, including the security filter chain. Purely additive — no request,
+ * response body, or business behavior changes, only a header and a log-context
+ * value.
+ */
+@Component
+@Order(Ordered.HIGHEST_PRECEDENCE)
+public class CorrelationIdFilter extends OncePerRequestFilter {
+
+    public static final String CORRELATION_ID_HEADER = "X-Correlation-Id";
+    public static final String CORRELATION_ID_MDC_KEY = "correlationId";
+
+    @Override
+    protected void doFilterInternal(HttpServletRequest request,
+                                    HttpServletResponse response,
+                                    FilterChain filterChain)
+            throws ServletException, IOException {
+
+        String correlationId = request.getHeader(CORRELATION_ID_HEADER);
+        if (correlationId == null || correlationId.isBlank()) {
+            correlationId = UUID.randomUUID().toString();
+        }
+
+        MDC.put(CORRELATION_ID_MDC_KEY, correlationId);
+        response.setHeader(CORRELATION_ID_HEADER, correlationId);
+        try {
+            filterChain.doFilter(request, response);
+        } finally {
+            MDC.remove(CORRELATION_ID_MDC_KEY);
+        }
+    }
+}

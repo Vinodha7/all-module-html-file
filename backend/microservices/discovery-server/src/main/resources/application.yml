@@ -1,0 +1,35 @@
+server:
+  port: 8761
+
+spring:
+  application:
+    name: discovery-server
+
+# A standalone Eureka server does not register with or fetch from itself.
+eureka:
+  client:
+    register-with-eureka: false
+    fetch-registry: false
+  instance:
+    hostname: localhost
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
+logging:
+  level:
+    root: INFO
+    org.springframework: INFO
+    com.cts.pharmatrack: DEBUG
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+
+
