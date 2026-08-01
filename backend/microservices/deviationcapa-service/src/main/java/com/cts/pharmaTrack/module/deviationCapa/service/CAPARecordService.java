@@ -57,8 +57,9 @@ public class CAPARecordService {
         CAPARecord capa = new CAPARecord();
         capa.setCapaId(request.getCapaId());
         apply(capa, request);
-        capa.setStatus(StringUtils.hasText(request.getStatus())
-                ? toShortStatus(request.getStatus()) : DEFAULT_STATUS);
+        if (!StringUtils.hasText(capa.getStatus())) {
+            capa.setStatus("Open");
+        }
         CAPARecord saved = capaRepository.save(capa);
         notificationPublisher.notify(NotificationPublisher.DEVIATION,
                 "CAPA id " + saved.getCapaId() + " was created");
@@ -95,9 +96,6 @@ public class CAPARecordService {
             throw new ResourceNotFoundException("DeviationRecord", request.getDeviationId());
         }
         apply(capa, request);
-        if (StringUtils.hasText(request.getStatus())) {
-            capa.setStatus(toShortStatus(request.getStatus()));
-        }
         CAPARecord updated = capaRepository.save(capa);
         notificationPublisher.notify(NotificationPublisher.DEVIATION,
                 "CAPA id " + updated.getCapaId() + " status changed to " + updated.getStatus());
@@ -135,7 +133,12 @@ public class CAPARecordService {
         capa.setDueDate(request.getDueDate());
         capa.setClosedDate(request.getClosedDate());
         if (StringUtils.hasText(request.getStatus())) {
-            capa.setStatus(toShortStatus(request.getStatus()));
+            capa.setStatus(request.getStatus());
+        }
+        // When a CAPA is marked Closed and no closed date was supplied,
+        // stamp it with the current date automatically.
+        if ("Closed".equalsIgnoreCase(capa.getStatus()) && capa.getClosedDate() == null) {
+            capa.setClosedDate(java.time.LocalDate.now());
         }
     }
 

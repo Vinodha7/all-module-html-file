@@ -41,6 +41,9 @@ public class BatchRecord {
     @Column(name = "status")
     private String status = "IP";
 
+    @Column(name = "supervisorName")
+    private String supervisorName;
+
     public int getBatchId() { return batchId; }
     public void setBatchId(int batchId) {
         this.batchId = batchId; }
@@ -78,4 +81,8 @@ public class BatchRecord {
     public String getStatus() { return status; }
     public void setStatus(String status) {
         this.status = status; }
+    public String getSupervisorName() {
+        return supervisorName; }
+    public void setSupervisorName(String supervisorName) {
+        this.supervisorName = supervisorName; }
 }

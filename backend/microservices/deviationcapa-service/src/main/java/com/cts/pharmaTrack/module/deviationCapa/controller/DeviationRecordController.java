@@ -52,14 +52,6 @@ public class DeviationRecordController {
         return ResponseEntity.ok(deviationService.getById(deviationId));
     }
 
-    @GetMapping("/retrieveDeviationsByEntity/{relatedEntityType}/{relatedEntityId}")
-    public ResponseEntity<List<DeviationRecordResponse>> retrieveByEntity(
-            @PathVariable String relatedEntityType,
-            @PathVariable String relatedEntityId) {
-        logger.info("GET /retrieveDeviationsByEntity request received with entityType: {}, entityId: {}", relatedEntityType, relatedEntityId);
-        return ResponseEntity.ok(deviationService.getByEntity(relatedEntityType, relatedEntityId));
-    }
-
     @PutMapping("/updateDeviation/{deviationId}")
     public ResponseEntity<?> updateDeviation(
             @PathVariable String deviationId,

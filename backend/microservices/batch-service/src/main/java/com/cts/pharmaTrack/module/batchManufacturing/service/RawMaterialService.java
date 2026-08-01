@@ -83,7 +83,9 @@ public class RawMaterialService {
         logger.info("Executing createRawMaterial with materialName: {}", request.getMaterialName());
         RawMaterialUsage material = new RawMaterialUsage();
         apply(material, request);
-        material.setStatus("CON");
+        if (material.getStatus() == null || material.getStatus().isBlank()) {
+            material.setStatus("Consumed");
+        }
         RawMaterialUsage saved = repository.save(material);
         notificationPublisher.notify(NotificationPublisher.BATCH,
             "Raw material usage " + saved.getMaterialName()
@@ -139,6 +141,9 @@ public class RawMaterialService {
         material.setQuantityUsed(
             request.getQuantityUsed());
         material.setUnit(request.getUnit());
+        if (request.getStatus() != null && !request.getStatus().isBlank()) {
+            material.setStatus(request.getStatus());
+        }
     }
 
     private RawMaterialUsageResponse toResponse(

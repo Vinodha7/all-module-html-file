@@ -30,4 +30,7 @@ public class QCTestRequest {
     private String result;
 
     private String specification;
+
+    // Outcome supplied by the frontend (Pass / Fail / Retest).
+    private String status;
 }

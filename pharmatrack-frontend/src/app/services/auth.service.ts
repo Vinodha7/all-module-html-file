@@ -22,12 +22,30 @@ export class AuthService {
   private http = inject(HttpClient);
   private baseUrl = 'http://localhost:8090/pharmaTrack/identityAccess/auth';
 
+  // ---------------------------------------------------------------------------
+  // DEV_BYPASS: lets the UI be viewed without the backend running (for UI/design
+  // work). Seeds a mock Admin session so every screen is reachable. Set to false
+  // to restore normal login against the backend.
+  // ---------------------------------------------------------------------------
+  private DEV_BYPASS = false;
+  private DEV_USER = { userId: 1, name: 'Dev Admin', email: 'dev@pharmatrack.local', role: 'Admin' };
+
   // Signals for state
   currentUser = signal<any>(null);
   token = signal<string | null>(localStorage.getItem('pt_token'));
   role = signal<string | null>(localStorage.getItem('pt_role'));
 
   constructor() {
+    if (this.DEV_BYPASS) {
+      // Seed a fake session; skip the backend /me call entirely.
+      this.token.set('dev-token');
+      this.role.set(this.DEV_USER.role);
+      this.currentUser.set(this.DEV_USER);
+      localStorage.setItem('pt_token', 'dev-token');
+      localStorage.setItem('pt_role', this.DEV_USER.role);
+      localStorage.setItem('pt_userId', String(this.DEV_USER.userId));
+      return;
+    }
     if (this.token()) {
       this.fetchCurrentUser().subscribe();
     }

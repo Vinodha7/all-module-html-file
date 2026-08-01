@@ -44,10 +44,6 @@ public class DeviationRecordService {
     private final CAPARecordRepository capaRepository;
     private final NotificationPublisher notificationPublisher;
 
-    private final com.cts.pharmaTrack.module.deviationCapa.external.ClinicalTrialRepository clinicalTrialRepository;
-    private final com.cts.pharmaTrack.module.deviationCapa.external.BatchRecordRepository batchRecordRepository;
-    private final com.cts.pharmaTrack.module.deviationCapa.external.DrugShipmentRepository drugShipmentRepository;
-
     public DeviationRecordResponse create(DeviationRecordRequest request) {
         logger.info("Executing create with deviationId: {}", request.getDeviationId());
         if (deviationRepository.existsById(request.getDeviationId())) {
@@ -58,7 +54,7 @@ public class DeviationRecordService {
         deviation.setDeviationId(request.getDeviationId());
         apply(deviation, request);
         deviation.setStatus(StringUtils.hasText(request.getStatus())
-                ? toShortStatus(request.getStatus()) : DEFAULT_STATUS);
+                ? request.getStatus() : "Open");
         DeviationRecord saved = deviationRepository.save(deviation);
         notificationPublisher.notify(NotificationPublisher.DEVIATION,
                 "Deviation id " + saved.getDeviationId() + " was created");
@@ -69,9 +65,6 @@ public class DeviationRecordService {
     public List<DeviationRecordResponse> getAll() {
         logger.info("Executing getAll");
         List<DeviationRecord> deviations = deviationRepository.findAll();
-        if (deviations.isEmpty()) {
-            throw new ResourceNotFoundException("No deviation records found");
-        }
         return deviations.stream().map(this::toResponse).toList();
     }
 
@@ -86,37 +79,12 @@ public class DeviationRecordService {
         DeviationRecord deviation = findOrThrow(request.getDeviationId());
         apply(deviation, request);
         if (StringUtils.hasText(request.getStatus())) {
-            deviation.setStatus(toShortStatus(request.getStatus()));
+            deviation.setStatus(request.getStatus());
         }
         DeviationRecord updated = deviationRepository.save(deviation);
         notificationPublisher.notify(NotificationPublisher.DEVIATION,
                 "Deviation id " + updated.getDeviationId() + " status changed to " + updated.getStatus());
         return toResponse(updated);
-    }
-
-    @Transactional(readOnly = true)
-    public List<DeviationRecordResponse> getByEntity(String relatedEntityType, String relatedEntityId) {
-        logger.info("Executing getByEntity with entityType: {}, entityId: {}", relatedEntityType, relatedEntityId);
-        String dbId = relatedEntityId;
-        if ("Trial".equals(relatedEntityType)) {
-            dbId = clinicalTrialRepository.findByTrialCode(relatedEntityId)
-                    .map(t -> String.valueOf(t.getTrialId()))
-                    .orElse(relatedEntityId);
-        } else if ("Batch".equals(relatedEntityType)) {
-            dbId = batchRecordRepository.findByBatchNumber(relatedEntityId)
-                    .map(b -> String.valueOf(b.getBatchId()))
-                    .orElse(relatedEntityId);
-        } else if ("Shipment".equals(relatedEntityType)) {
-            dbId = drugShipmentRepository.findFirstByBatchBatchNumber(relatedEntityId)
-                    .map(s -> String.valueOf(s.getShipmentId()))
-                    .orElse(relatedEntityId);
-        }
-        List<DeviationRecord> deviations = deviationRepository.findByRelatedEntityTypeAndRelatedEntityId(
-                relatedEntityType, dbId);
-        if (deviations.isEmpty()) {
-            throw new ResourceNotFoundException("No deviation records found for entity: " + relatedEntityId);
-        }
-        return deviations.stream().map(this::toResponse).toList();
     }
 
     public void updateStatus(String deviationId, String newStatus) {
@@ -146,32 +114,13 @@ public class DeviationRecordService {
     }
 
     private void apply(DeviationRecord deviation, DeviationRecordRequest request) {
-        String type = request.getRelatedEntityType();
-        if (!List.of("Trial", "Batch", "Shipment").contains(type)) {
-            throw new IllegalArgumentException("Invalid relatedEntityType: " + type + ". Must be Trial, Batch, or Shipment");
-        }
-        deviation.setRelatedEntityType(type);
-
-        String displayId = request.getRelatedEntityId();
-        String dbId = null;
-        if ("Trial".equals(type)) {
-            var trial = clinicalTrialRepository.findByTrialCode(displayId)
-                    .orElseThrow(() -> new ResourceNotFoundException("Trial not found with code: " + displayId));
-            dbId = String.valueOf(trial.getTrialId());
-        } else if ("Batch".equals(type)) {
-            var batch = batchRecordRepository.findByBatchNumber(displayId)
-                    .orElseThrow(() -> new ResourceNotFoundException("Batch not found with number: " + displayId));
-            dbId = String.valueOf(batch.getBatchId());
-        } else if ("Shipment".equals(type)) {
-            var shipment = drugShipmentRepository.findFirstByBatchBatchNumber(displayId)
-                    .orElseThrow(() -> new ResourceNotFoundException("Shipment not found for batch number: " + displayId));
-            dbId = String.valueOf(shipment.getShipmentId());
-        }
-        deviation.setRelatedEntityId(dbId);
-
+        // Store the related entity type/id exactly as supplied by the client.
+        deviation.setRelatedEntityType(request.getRelatedEntityType());
+        deviation.setRelatedEntityId(request.getRelatedEntityId());
         deviation.setDescription(request.getDescription());
         deviation.setDetectedById(request.getDetectedById());
-        deviation.setDetectionDate(java.time.LocalDate.now());
+        deviation.setDetectionDate(request.getDetectionDate() != null
+                ? request.getDetectionDate() : java.time.LocalDate.now());
         deviation.setImpact(request.getImpact());
     }
 
@@ -181,32 +130,10 @@ public class DeviationRecordService {
     }
 
     private DeviationRecordResponse toResponse(DeviationRecord d) {
-        String dbId = d.getRelatedEntityId();
-        String displayId = dbId;
-        if (dbId != null) {
-            try {
-                int id = Integer.parseInt(dbId);
-                if ("Trial".equals(d.getRelatedEntityType())) {
-                    displayId = clinicalTrialRepository.findById(id)
-                            .map(t -> t.getTrialCode())
-                            .orElse(dbId);
-                } else if ("Batch".equals(d.getRelatedEntityType())) {
-                    displayId = batchRecordRepository.findById(id)
-                            .map(b -> b.getBatchNumber())
-                            .orElse(dbId);
-                } else if ("Shipment".equals(d.getRelatedEntityType())) {
-                    displayId = drugShipmentRepository.findById(id)
-                            .map(s -> s.getBatch().getBatchNumber())
-                            .orElse(dbId);
-                }
-            } catch (NumberFormatException e) {
-                // Keep dbId as is
-            }
-        }
         return new DeviationRecordResponse(
                 d.getDeviationId(),
                 d.getRelatedEntityType(),
-                displayId,
+                d.getRelatedEntityId(),
                 d.getDescription(),
                 d.getDetectedById(),
                 d.getDetectionDate(),

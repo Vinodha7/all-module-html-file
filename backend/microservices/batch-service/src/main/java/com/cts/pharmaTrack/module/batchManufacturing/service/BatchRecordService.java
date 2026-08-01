@@ -52,10 +52,6 @@ public class BatchRecordService {
     public List<BatchRecordResponse> retrieveBatches() {
         logger.info("Executing retrieveBatches");
         List<BatchRecord> batches = repository.findAll();
-        if (batches.isEmpty()) {
-            throw new ResourceNotFoundException(
-                "No batches found");
-        }
         return batches.stream()
             .map(this::toResponse)
             .toList();
@@ -75,6 +71,14 @@ public class BatchRecordService {
         return null;
     }
 
+    private String getLoggedInUserName() {
+        var auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.getPrincipal() instanceof com.cts.pharmaTrack.common.security.SignedPrincipal principal) {
+            return principal.getDisplayName();
+        }
+        return null;
+    }
+
     public void createBatch(BatchRecordRequest request) {
         logger.info("Executing createBatch with batchNumber: {}", request.getBatchNumber());
         Optional<BatchRecord> existing =
@@ -87,7 +91,8 @@ public class BatchRecordService {
         }
         BatchRecord batch = new BatchRecord();
         apply(batch, request);
-        batch.setStatus("IP");
+        batch.setStatus("InProgress");
+        batch.setSupervisorName(getLoggedInUserName());
         String loggedInId = getLoggedInUserId();
         if (loggedInId != null) {
             batch.setManufacturingSiteId(Integer.parseInt(loggedInId));
@@ -150,6 +155,10 @@ public class BatchRecordService {
         batch.setQuantityManufactured(
             request.getQuantityManufactured());
         batch.setUnit(request.getUnit());
+        // Honour a status supplied by the client on update (Send/QC review).
+        if (request.getStatus() != null && !request.getStatus().isBlank()) {
+            batch.setStatus(request.getStatus());
+        }
     }
 
     private BatchRecordResponse toResponse(
@@ -163,6 +172,7 @@ public class BatchRecordService {
             b.getQuantityManufactured(),
             b.getUnit(),
             b.getManufacturingSiteId(),
-            b.getStatus());
+            b.getStatus(),
+            b.getSupervisorName());
     }
 }

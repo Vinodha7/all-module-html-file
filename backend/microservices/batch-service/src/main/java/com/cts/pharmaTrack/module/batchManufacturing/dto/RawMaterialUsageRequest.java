@@ -29,4 +29,7 @@ public class RawMaterialUsageRequest {
     private Double quantityUsed;
 
     private String unit;
+
+    // Status supplied by the frontend (Consumed / Quarantined).
+    private String status;
 }

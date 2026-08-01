@@ -25,4 +25,5 @@ public class BatchRecordResponse {
     private String unit;
     private int manufacturingSiteId;
     private String status;
+    private String supervisorName;
 }

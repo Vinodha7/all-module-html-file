@@ -36,4 +36,7 @@ public class BatchRecordRequest {
     private String unit;
 
     private Integer manufacturingSiteId;
+
+    // Lifecycle status supplied by the frontend on update (e.g. Send → QCHold).
+    private String status;
 }

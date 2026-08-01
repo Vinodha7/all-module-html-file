@@ -30,7 +30,7 @@ public class BatchRecordController {
         this.service = service;
     }
 
-    @PostMapping("/createBatch")
+    @PostMapping({"/createBatch", "/create"})
     public ResponseEntity<?> createBatch(
             @Valid @RequestBody BatchRecordRequest batch) {
         logger.info("POST /createBatch request received with batchNumber: {}", batch.getBatchNumber());
@@ -41,7 +41,7 @@ public class BatchRecordController {
                 "Batch created successfully"));
     }
 
-    @GetMapping("/retrieveBatches")
+    @GetMapping({"/retrieveBatches", "/all"})
     public ResponseEntity<List<BatchRecordResponse>>
             retrieveBatches() {
         logger.info("GET /retrieveBatches request received");
@@ -49,7 +49,7 @@ public class BatchRecordController {
             service.retrieveBatches());
     }
 
-    @GetMapping("/retrieveBatchById/{batch_id}")
+    @GetMapping({"/retrieveBatchById/{batch_id}", "/get/{batch_id}"})
     public ResponseEntity<BatchRecordResponse>
             retrieveBatchById(
             @PathVariable("batch_id") int batchId) {
@@ -58,7 +58,7 @@ public class BatchRecordController {
             service.retrieveBatchById(batchId));
     }
 
-    @PutMapping("/updateBatch/{batch_id}")
+    @PutMapping({"/updateBatch/{batch_id}", "/update/{batch_id}"})
     public ResponseEntity<?> updateBatch(
             @PathVariable("batch_id") int batchId,
             @Valid @RequestBody BatchRecordRequest batch) {

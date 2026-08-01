@@ -14,6 +14,7 @@ export const routes: Routes = [
     children: [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
       { path: 'dashboard', loadComponent: () => import('./components/dashboard/dashboard.component').then(m => m.DashboardComponent) },
+      { path: 'profile', loadComponent: () => import('./components/profile/profile.component').then(m => m.ProfileComponent) },
       { path: 'users', loadComponent: () => import('./components/admin/users/users.component').then(m => m.UsersComponent), data: { module: 'Users' } },
       { path: 'signatures', loadComponent: () => import('./components/admin/signatures/signatures.component').then(m => m.SignaturesComponent), data: { module: 'Electronic Signatures' } },
       { path: 'products', loadComponent: () => import('./components/admin/products/products.component').then(m => m.ProductsComponent), data: { module: 'Products' } },

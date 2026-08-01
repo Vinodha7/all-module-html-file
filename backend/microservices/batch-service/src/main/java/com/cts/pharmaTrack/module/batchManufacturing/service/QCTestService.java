@@ -86,7 +86,9 @@ public class QCTestService {
         logger.info("Executing createQCTest with testType: {}", request.getTestType());
         QCTest test = new QCTest();
         apply(test, request);
-        test.setStatus("RT");
+        // On creation the outcome is derived automatically from the observed
+        // result measured against the acceptance specification.
+        test.setStatus(evaluateStatus(request.getResult(), request.getSpecification()));
         String loggedInId = getLoggedInUserId();
         if (loggedInId != null) {
             test.setTestedById(Integer.parseInt(loggedInId));
@@ -128,6 +130,51 @@ public class QCTestService {
             + " status changed to " + updated.getStatus());
     }
 
+    /**
+     * Derives a QC outcome (Pass/Fail) by comparing the observed result against
+     * the acceptance specification. Supports ranges ("95 - 105%"), thresholds
+     * (">= 80", "< 5") and single targets. Non-numeric specs default to Pass.
+     */
+    private String evaluateStatus(String result, String spec) {
+        Double val = firstNumber(result);
+        if (val == null || spec == null || spec.isBlank()) {
+            return "Pass";
+        }
+        String s = spec.replace('–', '-').replace('—', '-').trim();
+        try {
+            if (s.startsWith(">=")) return val >= parseNum(s.substring(2)) ? "Pass" : "Fail";
+            if (s.startsWith("<=")) return val <= parseNum(s.substring(2)) ? "Pass" : "Fail";
+            if (s.startsWith(">"))  return val >  parseNum(s.substring(1)) ? "Pass" : "Fail";
+            if (s.startsWith("<"))  return val <  parseNum(s.substring(1)) ? "Pass" : "Fail";
+            java.util.regex.Matcher m = java.util.regex.Pattern
+                .compile("(\\d+(?:\\.\\d+)?)\\s*-\\s*(\\d+(?:\\.\\d+)?)").matcher(s);
+            if (m.find()) {
+                double lo = Double.parseDouble(m.group(1));
+                double hi = Double.parseDouble(m.group(2));
+                if (lo > hi) { double t = lo; lo = hi; hi = t; }
+                return (val >= lo && val <= hi) ? "Pass" : "Fail";
+            }
+            Double single = firstNumber(s);
+            if (single != null) return val.doubleValue() == single.doubleValue() ? "Pass" : "Fail";
+        } catch (Exception ignored) {
+            // fall through to default
+        }
+        return "Pass";
+    }
+
+    private Double firstNumber(String str) {
+        if (str == null) return null;
+        java.util.regex.Matcher m = java.util.regex.Pattern
+            .compile("-?\\d+(?:\\.\\d+)?").matcher(str);
+        return m.find() ? Double.valueOf(m.group()) : null;
+    }
+
+    private double parseNum(String str) {
+        Double n = firstNumber(str);
+        if (n == null) throw new NumberFormatException(str);
+        return n;
+    }
+
     private QCTest findOrThrow(int id) {
         return repository.findById(id)
             .orElseThrow(() ->
@@ -145,6 +192,9 @@ public class QCTestService {
         test.setTestDate(request.getTestDate());
         test.setResult(request.getResult());
         test.setSpecification(request.getSpecification());
+        if (request.getStatus() != null && !request.getStatus().isBlank()) {
+            test.setStatus(request.getStatus());
+        }
     }
 
     private QCTestResponse toResponse(QCTest t) {
