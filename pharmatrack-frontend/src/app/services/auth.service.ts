@@ -28,7 +28,7 @@ export class AuthService {
   // to restore normal login against the backend.
   // ---------------------------------------------------------------------------
   private DEV_BYPASS = false;
-  private DEV_USER = { userId: 1, name: 'Dev Admin', email: 'dev@pharmatrack.local', role: 'Admin' };
+  private DEV_USER = { userId: 1, name: 'Clinical Researcher', email: 'dev@pharmatrack.local', role: 'Researcher' };
 
   // Signals for state
   currentUser = signal<any>(null);
@@ -137,8 +137,23 @@ export class AuthService {
     return !!this.token();
   }
 
+  /**
+   * Canonical RBAC role key. Descriptive role names created by admin
+   * (e.g. "Clinical Researcher", "Principal Investigator officer") are mapped
+   * to the app's canonical keys so permission checks work regardless of the
+   * exact label chosen when the role was created.
+   */
+  normalizedRole(): string {
+    const raw = this.role();
+    if (!raw) return '';
+    const key = raw.toLowerCase().replace(/[^a-z]/g, '');
+    if (key.includes('investigator')) return 'Investigator';
+    if (key.includes('researcher')) return 'Researcher';
+    return raw;
+  }
+
   hasPermission(module: string): boolean {
-    const userRole = this.role();
+    const userRole = this.normalizedRole();
     if (!userRole) return false;
 
     // Visibility Mapping as per prompt:

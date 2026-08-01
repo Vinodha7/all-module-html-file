@@ -66,6 +66,12 @@ public class SecurityConfig {
                     "/pharmaTrack/identityAccess/products",
                     "/pharmaTrack/identityAccess/sites"
                 ).authenticated()
+                // Trial roles need the user directory (GET only) to pick a
+                // Principal Investigator by name. Create/update/delete users
+                // remain Admin-only below.
+                .requestMatchers(org.springframework.http.HttpMethod.GET,
+                    "/pharmaTrack/identityAccess/fetchUsers"
+                ).hasAnyRole("Admin", "Clinical Researcher", "Principal Investigator")
 
                 // â”€â”€ Admin only â”€â”€
                 .requestMatchers(org.springframework.http.HttpMethod.POST,
@@ -75,7 +81,6 @@ public class SecurityConfig {
                 .requestMatchers(
                     "/pharmaTrack/identityAccess/createUser",
                     "/pharmaTrack/identityAccess/createRole",
-                    "/pharmaTrack/identityAccess/fetchUsers",
                     "/pharmaTrack/identityAccess/fetchUserById/**",
                     "/pharmaTrack/identityAccess/updateUser/**",
                     "/pharmaTrack/identityAccess/updateUserStatus/**",

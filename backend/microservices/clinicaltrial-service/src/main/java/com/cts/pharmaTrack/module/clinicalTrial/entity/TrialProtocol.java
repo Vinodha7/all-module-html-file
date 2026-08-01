@@ -41,7 +41,8 @@ public class TrialProtocol {
     @Column(name = "endpoints", nullable = false, columnDefinition = "TEXT")
     private String endpoints;
 
-    @Column(name = "effectiveDate", nullable = false)
+    // Effective date is optional (frontend leaves it blank for e.g. Draft protocols)
+    @Column(name = "effectiveDate")
     private LocalDate effectiveDate;
 
     @Enumerated(EnumType.STRING)

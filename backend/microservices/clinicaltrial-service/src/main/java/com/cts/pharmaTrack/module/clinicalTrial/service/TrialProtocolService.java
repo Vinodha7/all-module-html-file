@@ -91,10 +91,7 @@ public class TrialProtocolService {
                 || request.getEndpoints().trim().isEmpty()) {
             throw new IllegalArgumentException("Endpoints is mandatory");
         }
-        if (request.getEffectiveDate() == null) {
-            throw new IllegalArgumentException(
-                    "Effective date is mandatory");
-        }
+        // Effective date is optional — no mandatory check (aligns with frontend)
         if (trialProtocolRepository.existsByTrialIdAndVersionNumber(
                 trialId, request.getVersionNumber().trim())) {
             logger.error(
@@ -237,10 +234,7 @@ public class TrialProtocolService {
                 || request.getEndpoints().trim().isEmpty()) {
             throw new IllegalArgumentException("Endpoints is mandatory");
         }
-        if (request.getEffectiveDate() == null) {
-            throw new IllegalArgumentException(
-                    "Effective date is mandatory");
-        }
+        // Effective date is optional — no mandatory check (aligns with frontend)
 
         trialProtocol.setVersionNumber(
                 request.getVersionNumber().trim());
@@ -414,8 +408,8 @@ public class TrialProtocolService {
         response.setExclusionCriteria(
                 savedProtocol.getExclusionCriteria());
         response.setEndpoints(savedProtocol.getEndpoints());
-        response.setEffectiveDate(
-                savedProtocol.getEffectiveDate().toString());
+        response.setEffectiveDate(savedProtocol.getEffectiveDate() != null
+                ? savedProtocol.getEffectiveDate().toString() : null);
         response.setStatus(savedProtocol.getStatus().name());
         response.setMessage("Protocol updated successfully");
         return response;
