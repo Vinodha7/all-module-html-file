@@ -26,12 +26,14 @@ import { AuthService } from '../../services/auth.service';
           <div class="brand-sub" *ngIf="viewMode() === 'reset'">Set your new secure password</div>
         </div>
 
-        <!-- Alert messages -->
-        <div class="alert alert-error" *ngIf="errorMsg()">
-          {{ errorMsg() }}
-        </div>
-        <div class="alert alert-success" *ngIf="successMsg()">
-          {{ successMsg() }}
+        <!-- Alert messages (reserved slot so the card never resizes) -->
+        <div class="alert-slot">
+          <div class="alert alert-error" *ngIf="errorMsg()">
+            {{ errorMsg() }}
+          </div>
+          <div class="alert alert-success" *ngIf="successMsg()">
+            {{ successMsg() }}
+          </div>
         </div>
 
         <!-- 1. LOGIN FORM -->
@@ -212,18 +214,18 @@ import { AuthService } from '../../services/auth.service';
     }
     .login-card {
       width: 100%;
-      max-width: 400px;
+      max-width: 430px;
       background: var(--card, #ffffff);
       border-radius: 18px;
       box-shadow: 0 30px 70px rgba(30, 16, 8, 0.35);
-      padding: 28px 34px 24px;
+      padding: 32px 38px 28px;
     }
     .brand {
       display: flex;
       flex-direction: column;
       align-items: center;
       text-align: center;
-      margin-bottom: 18px;
+      margin-bottom: 10px;
     }
     .brand-mark {
       width: 44px;
@@ -253,7 +255,8 @@ import { AuthService } from '../../services/auth.service';
     }
     .login-field {
       text-align: left;
-      margin-bottom: 14px;
+      margin-bottom: 34px;      /* generous room for the absolute field-error below */
+      position: relative;
     }
     .login-field label {
       display: block;
@@ -287,9 +290,15 @@ import { AuthService } from '../../services/auth.service';
       border-color: var(--danger, #b3261e);
       box-shadow: 0 0 0 3px rgba(179, 38, 30, 0.14);
     }
+    /* Absolutely positioned in the reserved margin so showing an error never
+       resizes the field or the card. */
     .field-error {
-      margin-top: 6px;
+      position: absolute;
+      top: 100%;
+      left: 0;
+      margin-top: 8px;
       font-size: 12.5px;
+      line-height: 1.3;
       font-weight: 500;
       color: var(--danger, #b3261e);
       text-align: left;
@@ -402,10 +411,18 @@ import { AuthService } from '../../services/auth.service';
       height: 14px;
       flex-shrink: 0;
     }
+    /* Reserved space for the top alert so it never grows the card. */
+    .alert-slot {
+      min-height: 30px;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: stretch;
+    }
     .alert {
       padding: 10px 14px;
       border-radius: 9px;
-      margin-bottom: 14px;
+      margin-bottom: 0;
+      width: 100%;
       font-size: 13px;
       text-align: left;
     }
@@ -571,9 +588,25 @@ export class LoginComponent implements OnInit {
       next: (res) => {
         this.loading.set(false);
         if (res.success) {
-          this.successMsg.set(res.message || 'Password reset link sent to your email.');
-          // Simulate clicking link: automatically output the token in console for convenience
-          console.log(`Password reset link: http://localhost:4200/reset-password?token=${res.data}`);
+          // No email server in this environment: the backend returns the reset
+          // token (dev mode) either in `data` or as a "RESET_TOKEN::<token>" message
+          // marker. If present, take the user straight to the set-new-password step.
+          const marker = 'RESET_TOKEN::';
+          const msg = res.message || '';
+          let token: string = (res.data as any) || '';
+          if (!token && msg.startsWith(marker)) token = msg.substring(marker.length);
+
+          if (token) {
+            this.resetToken = token;
+            this.newPassword = '';
+            this.confirmPassword = '';
+            this.submitted.set(false);
+            this.validateCriteria();
+            this.viewMode.set('reset');
+            this.successMsg.set('Verified. Set your new password below.');
+          } else {
+            this.successMsg.set(msg || 'Password reset link sent to your email.');
+          }
         } else {
           this.errorMsg.set(res.message);
         }

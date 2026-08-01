@@ -26,7 +26,7 @@ export const routes: Routes = [
       { path: 'deviations', loadComponent: () => import('./components/deviations/deviations.component').then(m => m.DeviationsComponent), data: { module: 'Deviation & CAPA' } },
       { path: 'regulatory', loadComponent: () => import('./components/regulatory/regulatory.component').then(m => m.RegulatoryComponent), data: { module: 'Regulatory Affairs' } },
       { path: 'supply-chain', loadComponent: () => import('./components/supply-chain/supply-chain.component').then(m => m.SupplyChainComponent), data: { module: 'Supply Chain' } },
-      { path: 'notifications', loadComponent: () => import('./components/notifications/notifications.component').then(m => m.NotificationsComponent) }
+      { path: 'notifications', loadComponent: () => import('./components/notifications/notifications.component').then(m => m.NotificationsComponent), data: { module: 'Notifications' } }
     ]
   },
   { path: '**', redirectTo: 'login' }

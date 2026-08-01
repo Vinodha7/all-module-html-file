@@ -93,13 +93,27 @@ public class AuditAspect {
         };
     }
 
+    /**
+     * Redacts sensitive values (passwords, secrets, tokens) from a captured
+     * request-body dump so they are never stored in the audit ledger or written to
+     * logs. Handles both the Lombok {@code Name(field=value, ...)} toString form and
+     * JSON ({@code "field":"value"}). 21 CFR Part 11 / security requirement:
+     * passwords must never appear in audit events, details, logs, or the UI.
+     */
+    static String redactSensitive(String s) {
+        if (s == null || s.isEmpty()) return s;
+        return s.replaceAll(
+                "(?i)(\"?(?:password|passwd|pwd|newPassword|confirmPassword|currentPassword|oldPassword|secret|otp|pin|token|credential)\"?\\s*[:=]\\s*)(\"[^\"]*\"|[^,)}\\]]*)",
+                "$1[REDACTED]");
+    }
+
     /** Serialize the controller's request-body argument (if any) as the new value. */
     private String newValueFrom(JoinPoint joinPoint) {
         for (Object arg : joinPoint.getArgs()) {
             if (arg == null) continue;
             if (arg instanceof HttpServletRequest || arg instanceof HttpServletResponse) continue;
             if (arg instanceof CharSequence || arg instanceof Number || arg instanceof Boolean) continue;
-            return String.valueOf(arg);   // Lombok @Data DTOs render a readable field dump
+            return redactSensitive(String.valueOf(arg));   // Lombok @Data DTOs render a readable field dump
         }
         return null;
     }

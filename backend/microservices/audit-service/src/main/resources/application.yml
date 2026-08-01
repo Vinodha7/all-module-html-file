@@ -12,8 +12,13 @@ spring:
     database-platform: org.hibernate.dialect.MySQLDialect
     hibernate:
       ddl-auto: update
+      # Use Spring Boot's default snake_case physical naming so the entity maps to
+      # the existing audit_event columns (performed_at, entity_id, ...). A previous
+      # PhysicalNamingStrategyStandardImpl override created duplicate camelCase
+      # columns and could not add the NOT NULL performedAt/receivedAt columns to the
+      # already-populated table, breaking every read (Unknown column 'performedAt').
       naming:
-        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+        physical-strategy: org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy
     show-sql: false
     open-in-view: false
 jwt:

@@ -217,9 +217,11 @@ public class AuthServiceImpl implements AuthService {
                 System.out.println("Reset token for "
                         + user.getEmail() + ": " + resetToken);
                 if (exposeResetToken) {
-                    yield ApiResponse.success(
-                            "Reset token issued (dev mode — returned for testing only)",
-                            resetToken);
+                    // Dev/local (no email server): carry the token in BOTH data and a
+                    // machine-parseable message marker so the UI can drive the reset
+                    // in-app. The frontend parses "RESET_TOKEN::<token>" and never shows
+                    // it raw. Never enable in prod.
+                    yield ApiResponse.success("RESET_TOKEN::" + resetToken, resetToken);
                 }
                 yield ApiResponse.success("Reset link sent to email");
             }

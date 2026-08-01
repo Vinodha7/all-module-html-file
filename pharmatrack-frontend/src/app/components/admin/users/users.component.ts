@@ -74,17 +74,22 @@ interface Country { name: string; dial: string; flag: string; }
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
             <input type="text" placeholder="Search name or email...">
           </div>
-          <div class="filter-select">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
-            <select [(ngModel)]="statusFilter" (change)="applyFilters()" name="statusFilter" [ngModelOptions]="{standalone:true}" aria-label="Filter by Status">
-              <option value="All">All</option>
-              <option value="Active">Active</option>
-              <option value="Inactive">Inactive</option>
-              <option value="Locked">Locked</option>
-              <option value="Deactivated">Deactivated</option>
-            </select>
-            <svg class="caret" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+          <div class="dropdown">
+            <div class="tooltip-wrap">
+              <button type="button" class="icon-filter" [class.active]="statusFilter !== 'All'" aria-label="Filter by Status" (click)="toggleStatusMenu()">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+              </button>
+              <span class="tooltip">Filter by Status</span>
+            </div>
+            <div class="dropdown-menu dropdown-menu-right" [class.open]="statusMenuOpen()">
+              <button type="button" class="dropdown-item" (click)="setStatus('All')">All</button>
+              <button type="button" class="dropdown-item" (click)="setStatus('Active')">Active</button>
+              <button type="button" class="dropdown-item" (click)="setStatus('Inactive')">Inactive</button>
+              <button type="button" class="dropdown-item" (click)="setStatus('Locked')">Locked</button>
+              <button type="button" class="dropdown-item" (click)="setStatus('Deactivated')">Deactivated</button>
+            </div>
           </div>
+          <span class="filter-chip" *ngIf="statusFilter !== 'All'">{{ statusFilter }}<button type="button" (click)="setStatus('All')" aria-label="Clear status filter">×</button></span>
         </div>
 
         <!-- Table -->
@@ -152,15 +157,15 @@ interface Country { name: string; dial: string; flag: string; }
                           Edit
                         </button>
                         <div class="dropdown-divider"></div>
-                        <button type="button" class="dropdown-item danger" *ngIf="user.status === 'Active'" (click)="deactivateUser(user.userId)">
+                        <button type="button" class="dropdown-item danger" *ngIf="user.status === 'Active'" (click)="askConfirm('deactivate', user.userId, 'Are you sure you want to deactivate this user?')">
                           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/></svg>
                           Deactivate
                         </button>
-                        <button type="button" class="dropdown-item" *ngIf="user.status === 'Locked'" (click)="unlockUserAccount(user.userId)">
+                        <button type="button" class="dropdown-item" *ngIf="user.status === 'Locked'" (click)="askConfirm('unlock', user.userId, 'Are you sure you want to unlock this user?')">
                           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>
                           Unlock
                         </button>
-                        <button type="button" class="dropdown-item" *ngIf="user.status !== 'Active' && user.status !== 'Locked'" (click)="reactivateUser(user.userId)">
+                        <button type="button" class="dropdown-item" *ngIf="user.status !== 'Active' && user.status !== 'Locked'" (click)="askConfirm('reactivate', user.userId, 'Are you sure you want to ' + (user.status === 'Inactive' ? 'activate' : 'reactivate') + ' this user?')">
                           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
                           {{ user.status === 'Inactive' ? 'Activate' : 'Reactivate' }}
                         </button>
@@ -417,9 +422,24 @@ interface Country { name: string; dial: string; flag: string; }
           </div>
         </div>
       </div>
+
+      <!-- Status-change confirmation -->
+      <div class="modal-overlay confirm-overlay" *ngIf="confirmModal() as c">
+        <div class="modal confirm-modal">
+          <button type="button" class="modal-close-x" (click)="closeConfirm()" aria-label="Close">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+          <h2>Please Confirm</h2>
+          <p class="confirm-text">{{ c.message }}</p>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-primary" (click)="confirmYes()">Yes</button>
+          </div>
+        </div>
+      </div>
     </div>
   `,
   styles: [`
+    .confirm-modal { max-width: 440px; }
     /* Compact create button tooltip */
     .tooltip-wrap { position: relative; display: inline-flex; }
     .tooltip-wrap .tooltip {
@@ -433,6 +453,14 @@ interface Country { name: string; dial: string; flag: string; }
       border: 5px solid transparent; border-top-color: #211611;
     }
     .tooltip-wrap:hover .tooltip { opacity: 1; }
+    /* Icon-only status filter (matches Audit Trail / E-Signatures) */
+    .icon-filter { width: 42px; height: 42px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: #fff; color: var(--text-dim); display: flex; align-items: center; justify-content: center; cursor: pointer; }
+    .icon-filter:hover { background: #f4f6f5; color: var(--text); }
+    .icon-filter.active { border-color: var(--accent); color: var(--accent-dark); background: var(--accent-light); }
+    .filter-chip { display: inline-flex; align-items: center; gap: 6px; background: var(--accent-light); color: var(--accent-dark); font-size: 12.5px; font-weight: 600; padding: 6px 8px 6px 12px; border-radius: 18px; }
+    .filter-chip button { border: none; background: none; color: var(--accent-dark); font-size: 15px; line-height: 1; cursor: pointer; padding: 0 2px; }
+    .filter-row .dropdown-menu { min-width: 190px; padding: 8px; }
+    .filter-row .dropdown-item { justify-content: flex-start; padding: 9px 12px; }
 
     /* Single status filter control */
     .filter-select {
@@ -562,7 +590,9 @@ export class UsersComponent implements OnInit {
 
   // Filter params
   statusFilter = 'All';
+  statusMenuOpen = signal<boolean>(false);
   filteredUsers = signal<any[]>([]);
+  confirmModal = signal<{ message: string; action: 'deactivate' | 'unlock' | 'reactivate'; userId: number } | null>(null);
 
   // Dropdown helper
   openedActionUser = signal<number | null>(null);
@@ -780,6 +810,35 @@ export class UsersComponent implements OnInit {
 
   toggleExportMenu() {
     this.exportMenuOpen.set(!this.exportMenuOpen());
+  }
+
+  toggleStatusMenu() {
+    this.statusMenuOpen.set(!this.statusMenuOpen());
+  }
+
+  // Confirmation before a status change (deactivate / unlock / activate / reactivate).
+  askConfirm(action: 'deactivate' | 'unlock' | 'reactivate', userId: number, message: string) {
+    this.openedActionUser.set(null);
+    this.confirmModal.set({ message, action, userId });
+  }
+
+  confirmYes() {
+    const c = this.confirmModal();
+    this.confirmModal.set(null);
+    if (!c) return;
+    if (c.action === 'deactivate') this.deactivateUser(c.userId);
+    else if (c.action === 'unlock') this.unlockUserAccount(c.userId);
+    else if (c.action === 'reactivate') this.reactivateUser(c.userId);
+  }
+
+  closeConfirm() {
+    this.confirmModal.set(null);
+  }
+
+  setStatus(status: string) {
+    this.statusFilter = status;
+    this.statusMenuOpen.set(false);
+    this.applyFilters();
   }
 
   exportAs(format: 'pdf' | 'excel') {

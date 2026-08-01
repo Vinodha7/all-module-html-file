@@ -26,6 +26,8 @@ public final class AuditRbac {
 
     // ── Roles ────────────────────────────────────────────────────────────────
     public static final String ROLE_ADMIN = "Admin";
+    /** @deprecated The Auditor role has been removed; retained only for legacy tests. */
+    @Deprecated
     public static final String ROLE_AUDITOR = "Auditor";
     public static final String ROLE_QA_ANALYST = "QAAnalyst";
     public static final String ROLE_QA_MANAGER = "QAManager";
@@ -42,6 +44,6 @@ public final class AuditRbac {
     public static final String MODULE_DEVIATION_CAPA = AuditModules.DEVIATION_CAPA;
     public static final String MODULE_IDENTITY_ACCESS_MANAGEMENT = AuditModules.IDENTITY_ACCESS_MANAGEMENT;
 
-    /** Every known module — granted to all-access roles (Admin, Auditor). */
+    /** Every known module — granted to the all-access Admin role. */
     public static final Set<String> ALL_MODULES = AuditModules.ALL;
 }

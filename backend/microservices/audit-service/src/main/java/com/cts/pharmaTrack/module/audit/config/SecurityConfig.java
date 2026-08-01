@@ -45,9 +45,9 @@ public class SecurityConfig {
                             "/swagger-ui.html"
                     ).permitAll()
                     .requestMatchers("/actuator/**").permitAll()
-                    // ── Integrity report: Admin or Auditor only ──
+                    // ── Integrity report: Admin only ──
                     .requestMatchers(HttpMethod.GET, "/pharmaTrack/audit/verifyIntegrity")
-                            .hasAnyRole("Admin", "Auditor")
+                            .hasRole("Admin")
                     // ── Ingest: valid JWT required (X-Internal-Token enforced by
                     //    InternalTokenFilter) ──
                     .requestMatchers(HttpMethod.POST, "/pharmaTrack/audit/events")

@@ -9,9 +9,9 @@ import java.util.Set;
  * Resolves the set of audit modules a given role is permitted to read.
  *
  * <p>Input is the plain role name from the JWT {@code role} claim (not the
- * {@code ROLE_} authority). All-access roles (Admin, Auditor) receive every
- * module; scoped roles receive their subset; any unknown or null role receives
- * an empty set (deny by default). Returned sets are immutable.
+ * {@code ROLE_} authority). The all-access Admin role receives every module;
+ * scoped roles receive their subset; any unknown or null role receives an empty
+ * set (deny by default). Returned sets are immutable.
  */
 @Component
 public class ModuleScopeResolver {
@@ -22,7 +22,7 @@ public class ModuleScopeResolver {
             return Set.of();
         }
         return switch (role) {
-            case AuditRbac.ROLE_ADMIN, AuditRbac.ROLE_AUDITOR ->
+            case AuditRbac.ROLE_ADMIN ->
                     AuditModules.ALL;
             case AuditRbac.ROLE_QA_ANALYST, AuditRbac.ROLE_QA_MANAGER ->
                     Set.of(AuditModules.BATCH_MANUFACTURING,

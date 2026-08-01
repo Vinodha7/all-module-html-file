@@ -60,12 +60,12 @@ interface Product {
         <div class="table-scroll" *ngIf="!loading() && filtered().length > 0">
           <table class="table-fixed">
             <colgroup>
-              <col style="width:28%">
-              <col style="width:22%">
-              <col style="width:14%">
-              <col style="width:14%">
-              <col style="width:14%">
-              <col style="width:80px">
+              <col style="width:20%">
+              <col style="width:20%">
+              <col style="width:15%">
+              <col style="width:15%">
+              <col style="width:15%">
+              <col style="width:15%">
             </colgroup>
             <thead>
               <tr>
@@ -216,6 +216,9 @@ interface Product {
   `,
   styles: [`
     .filter-select { min-width: 200px; }
+    /* Fit the products table to the screen — no horizontal scroll. */
+    table.table-fixed { min-width: 0; }
+    .table-scroll { overflow-x: hidden; }
     .filter-select select {
       border: none; background: transparent; font-family: inherit;
       font-size: 14px; color: var(--text); flex: 1; cursor: pointer;

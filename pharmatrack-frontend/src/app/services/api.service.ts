@@ -114,8 +114,30 @@ export class ApiService {
     return this.http.get<ApiResponse<any>>(`${this.gatewayUrl}/pharmaTrack/audit/summary`, this.getOptions());
   }
 
+  getAuditEventById(eventId: string): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(`${this.gatewayUrl}/pharmaTrack/audit/events/${encodeURIComponent(eventId)}`, this.getOptions());
+  }
+
   verifyAuditLogIntegrity(): Observable<ApiResponse<any>> {
     return this.http.get<ApiResponse<any>>(`${this.gatewayUrl}/pharmaTrack/audit/verifyIntegrity`, this.getOptions());
+  }
+
+  // Server-side export (PDF / Excel). Honours the active list filters. Returns the
+  // raw file bytes so the caller can trigger a browser download.
+  exportAuditEvents(format: 'pdf' | 'excel', filters?: any): Observable<Blob> {
+    let params = new HttpParams().set('format', format);
+    if (filters) {
+      Object.keys(filters).forEach(k => {
+        if (filters[k] !== undefined && filters[k] !== null && filters[k] !== '') {
+          params = params.set(k, String(filters[k]));
+        }
+      });
+    }
+    return this.http.get(`${this.gatewayUrl}/pharmaTrack/audit/events/export`, {
+      headers: this.auth.getHeaders(),
+      params,
+      responseType: 'blob'
+    });
   }
 
   // ── CLINICAL TRIAL MODULE ──
@@ -197,6 +219,11 @@ export class ApiService {
     return this.http.get<any[]>(`${this.gatewayUrl}/pharmaTrack/batchManufacturing/raw-materials`, this.getOptions());
   }
 
+  // Confirmed backend path (used by the dashboard).
+  getAllRawMaterials(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.gatewayUrl}/pharmaTrack/batchManufacturing/retrieveRawMaterials`, this.getOptions());
+  }
+
   getQCTests(): Observable<any[]> {
     return this.http.get<any[]>(`${this.gatewayUrl}/pharmaTrack/batchManufacturing/qc-tests`, this.getOptions());
   }
@@ -262,6 +289,10 @@ export class ApiService {
     return this.http.get<any>(`${this.gatewayUrl}/pharmaTrack/supplyColdManagement/fetchLogsByShipment/${shipmentId}`, this.getOptions());
   }
 
+  getExcursionLogs(): Observable<any> {
+    return this.http.get<any>(`${this.gatewayUrl}/pharmaTrack/supplyColdManagement/fetchExcursionLogs`, this.getOptions());
+  }
+
   // ── DEVIATION & CAPA MODULE ──
   createDeviation(dev: any): Observable<any> {
     return this.http.post<any>(`${this.gatewayUrl}/pharmaTrack/deviationCapa/createDeviation`, dev, this.getOptions());
@@ -322,6 +353,10 @@ export class ApiService {
 
   getMilestonesByDossier(dossierId: string): Observable<any[]> {
     return this.http.get<any[]>(`${this.gatewayUrl}/pharmaTrack/regulatoryAffairs/fetchMilestonesByDossier?dossierId=${dossierId}`, this.getOptions());
+  }
+
+  getAllMilestones(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.gatewayUrl}/pharmaTrack/regulatoryAffairs/fetchMilestones`, this.getOptions());
   }
 
   // ── NOTIFICATIONS ──
