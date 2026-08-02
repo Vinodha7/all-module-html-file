@@ -56,13 +56,14 @@ public class TrialSubjectService {
         String token = getBearerToken();
         int plannedSubjects = 0;
         try {
-            com.fasterxml.jackson.databind.JsonNode trial = restClient.get()
+            @SuppressWarnings("unchecked")
+            java.util.Map<String, Object> trial = restClient.get()
                     .uri(clinicalTrialBaseUrl + "/pharmaTrack/clinicalTrial/getTrialById/" + request.getTrialId())
                     .header(HttpHeaders.AUTHORIZATION, token)
                     .retrieve()
-                    .body(com.fasterxml.jackson.databind.JsonNode.class);
-            if (trial != null) {
-                plannedSubjects = trial.path("plannedSubjects").asInt(0);
+                    .body(java.util.Map.class);
+            if (trial != null && trial.get("plannedSubjects") instanceof Number planned) {
+                plannedSubjects = planned.intValue();
             }
         } catch (Exception ex) {
             logger.warn("Failed to fetch planned subjects from clinicaltrial-service: {}", ex.getMessage());

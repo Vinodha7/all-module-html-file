@@ -15,6 +15,13 @@ export class ApiService {
     return { headers: this.auth.getHeaders() };
   }
 
+  // For endpoints that return a plain-text body (e.g. "Subject created successfully").
+  // Without this, HttpClient tries to JSON.parse the text and errors on success.
+  // `as 'json'` keeps the typed Observable while the runtime response stays text.
+  private getTextOptions() {
+    return { headers: this.auth.getHeaders(), responseType: 'text' as 'json' };
+  }
+
   // ── IAM MODULE ──
   getUsers(): Observable<ApiResponse<any[]>> {
     return this.http.get<ApiResponse<any[]>>(`${this.gatewayUrl}/pharmaTrack/identityAccess/fetchUsers`, this.getOptions());
@@ -167,7 +174,7 @@ export class ApiService {
 
   // ── SUBJECT ENROLLMENT MODULE ──
   createSubject(subject: any): Observable<any> {
-    return this.http.post<any>(`${this.gatewayUrl}/pharmaTrack/subjectEnrolment/createTrials`, subject, this.getOptions());
+    return this.http.post<any>(`${this.gatewayUrl}/pharmaTrack/subjectEnrolment/createTrials`, subject, this.getTextOptions());
   }
 
   getSubjects(): Observable<any[]> {
@@ -179,23 +186,39 @@ export class ApiService {
   }
 
   updateSubject(subject: any): Observable<any> {
-    return this.http.put<any>(`${this.gatewayUrl}/pharmaTrack/subjectEnrolment/updateTrials`, subject, this.getOptions());
+    return this.http.put<any>(`${this.gatewayUrl}/pharmaTrack/subjectEnrolment/updateTrials`, subject, this.getTextOptions());
   }
 
   createVisit(visit: any): Observable<any> {
-    return this.http.post<any>(`${this.gatewayUrl}/pharmaTrack/subjectEnrolment/createVisits`, visit, this.getOptions());
+    return this.http.post<any>(`${this.gatewayUrl}/pharmaTrack/subjectEnrolment/createVisits`, visit, this.getTextOptions());
+  }
+
+  getAllVisits(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.gatewayUrl}/pharmaTrack/subjectEnrolment/fetchVisits`, this.getOptions());
   }
 
   getVisitsBySubjectId(subjectId: number): Observable<any[]> {
     return this.http.get<any[]>(`${this.gatewayUrl}/pharmaTrack/subjectEnrolment/fetchVisitsBySubjectId?subjectId=${subjectId}`, this.getOptions());
   }
 
+  updateVisit(visit: any): Observable<any> {
+    return this.http.put<any>(`${this.gatewayUrl}/pharmaTrack/subjectEnrolment/updateVisits`, visit, this.getTextOptions());
+  }
+
   createAdverseEvent(ae: any): Observable<any> {
-    return this.http.post<any>(`${this.gatewayUrl}/pharmaTrack/subjectEnrolment/createEvents`, ae, this.getOptions());
+    return this.http.post<any>(`${this.gatewayUrl}/pharmaTrack/subjectEnrolment/createEvents`, ae, this.getTextOptions());
+  }
+
+  getAllAdverseEvents(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.gatewayUrl}/pharmaTrack/subjectEnrolment/fetchEvents`, this.getOptions());
   }
 
   getAdverseEventsBySubjectId(subjectId: number): Observable<any[]> {
     return this.http.get<any[]>(`${this.gatewayUrl}/pharmaTrack/subjectEnrolment/fetchEventsBySubjectId?subjectId=${subjectId}`, this.getOptions());
+  }
+
+  updateAdverseEvent(ae: any): Observable<any> {
+    return this.http.put<any>(`${this.gatewayUrl}/pharmaTrack/subjectEnrolment/updateEvents`, ae, this.getTextOptions());
   }
 
   // ── BATCH MANUFACTURING MODULE ──
@@ -332,7 +355,7 @@ export class ApiService {
 
   // ── REGULATORY AFFAIRS ──
   createDossier(dossier: any): Observable<any> {
-    return this.http.post<any>(`${this.gatewayUrl}/pharmaTrack/regulatoryAffairs/createDossier`, dossier, this.getOptions());
+    return this.http.post<any>(`${this.gatewayUrl}/pharmaTrack/regulatoryAffairs/createDossier`, dossier, this.getTextOptions());
   }
 
   getDossiers(): Observable<any[]> {
@@ -344,11 +367,11 @@ export class ApiService {
   }
 
   updateDossier(dossier: any): Observable<any> {
-    return this.http.put<any>(`${this.gatewayUrl}/pharmaTrack/regulatoryAffairs/updateDossier`, dossier, this.getOptions());
+    return this.http.put<any>(`${this.gatewayUrl}/pharmaTrack/regulatoryAffairs/updateDossier`, dossier, this.getTextOptions());
   }
 
   createMilestone(milestone: any): Observable<any> {
-    return this.http.post<any>(`${this.gatewayUrl}/pharmaTrack/regulatoryAffairs/createMilestone`, milestone, this.getOptions());
+    return this.http.post<any>(`${this.gatewayUrl}/pharmaTrack/regulatoryAffairs/createMilestone`, milestone, this.getTextOptions());
   }
 
   getMilestonesByDossier(dossierId: string): Observable<any[]> {
@@ -357,6 +380,10 @@ export class ApiService {
 
   getAllMilestones(): Observable<any[]> {
     return this.http.get<any[]>(`${this.gatewayUrl}/pharmaTrack/regulatoryAffairs/fetchMilestones`, this.getOptions());
+  }
+
+  updateMilestone(milestone: any): Observable<any> {
+    return this.http.put<any>(`${this.gatewayUrl}/pharmaTrack/regulatoryAffairs/updateMilestone`, milestone, this.getTextOptions());
   }
 
   // ── NOTIFICATIONS ──
