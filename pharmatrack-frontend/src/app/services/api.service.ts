@@ -284,6 +284,10 @@ export class ApiService {
     return this.http.put<any>(`${this.gatewayUrl}/pharmaTrack/supplyColdManagement/updateShipment/${id}`, shipment, this.getOptions());
   }
 
+  updateShipmentStatus(id: number, status: string): Observable<any> {
+    return this.http.put<any>(`${this.gatewayUrl}/pharmaTrack/supplyColdManagement/updateShipmentStatus/${id}`, { status }, this.getOptions());
+  }
+
   createInventory(inv: any): Observable<any> {
     return this.http.post<any>(`${this.gatewayUrl}/pharmaTrack/supplyColdManagement/createInventory`, inv, this.getOptions());
   }
