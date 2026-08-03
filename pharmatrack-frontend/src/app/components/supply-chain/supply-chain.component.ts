@@ -80,11 +80,10 @@ import { ApiService } from '../../services/api.service';
           <div class="table-card-head"><h3>Shipments</h3><span class="count">{{ filteredShipments().length }} records</span></div>
           <div class="table-scroll">
             <table>
-              <thead><tr><th>Shipment ID</th><th>Batch</th><th>Route</th><th>Carrier</th><th>Status</th><th style="text-align:center;">Actions</th></tr></thead>
+              <thead><tr><th>Batch</th><th>Route</th><th>Carrier</th><th>Status</th><th style="text-align:center;">Actions</th></tr></thead>
               <tbody>
                 <tr *ngFor="let s of pagedShipments()">
-                  <td class="name-cell">{{ fmtShip(s.shipmentId) }}</td>
-                  <td>{{ s.batch?.batchNumber || getBatchNumber(s.batchId) }}</td>
+                  <td class="name-cell">{{ s.batch?.batchNumber || getBatchNumber(s.batchId) }}</td>
                   <td class="route"><b>{{ s.fromSite?.siteName || getSiteName(s.fromSiteId) }}</b> → {{ s.toSite?.siteName || getSiteName(s.toSiteId) }}</td>
                   <td>{{ s.carrierName }}</td>
                   <td><span class="badge-status" [ngClass]="shipBadge(s.status)">{{ s.status }}</span></td>
@@ -101,7 +100,7 @@ import { ApiService } from '../../services/api.service';
                   </td>
                 </tr>
                 <tr *ngIf="filteredShipments().length === 0">
-                  <td colspan="6"><div class="empty-state">No shipments registered.</div></td>
+                  <td colspan="5"><div class="empty-state">No shipments registered.</div></td>
                 </tr>
               </tbody>
             </table>
@@ -138,11 +137,10 @@ import { ApiService } from '../../services/api.service';
           <div class="table-card-head"><h3>Cold-Chain Readings</h3><span class="count">{{ filteredTelemetry().length }} records</span></div>
           <div class="table-scroll">
             <table>
-              <thead><tr><th>Reading ID</th><th>Shipment ID</th><th>Recorded At</th><th>Temperature</th><th>Threshold</th><th>Status</th><th style="text-align:center;">Actions</th></tr></thead>
+              <thead><tr><th>Shipment Code</th><th>Recorded At</th><th>Temperature</th><th>Threshold</th><th>Status</th><th style="text-align:center;">Actions</th></tr></thead>
               <tbody>
                 <tr *ngFor="let log of pagedTelemetry()">
-                  <td class="name-cell">{{ fmtLog(log.logId) }}</td>
-                  <td class="ref-accent">{{ fmtShip(log.shipmentId || log.shipment?.shipmentId) }}</td>
+                  <td class="name-cell ref-accent">{{ fmtShip(log.shipmentId || log.shipment?.shipmentId) }}</td>
                   <td>{{ log.recordedAt | date:'medium' }}</td>
                   <td class="temp-value" [class.danger-text]="isExcursion(log)">{{ log.temperature }} °C</td>
                   <td>{{ log.minThreshold }}–{{ log.maxThreshold }} °C</td>
@@ -157,7 +155,7 @@ import { ApiService } from '../../services/api.service';
                   </td>
                 </tr>
                 <tr *ngIf="filteredTelemetry().length === 0">
-                  <td colspan="7"><div class="empty-state">No sensor logs compiled yet.</div></td>
+                  <td colspan="6"><div class="empty-state">No sensor logs compiled yet.</div></td>
                 </tr>
               </tbody>
             </table>
